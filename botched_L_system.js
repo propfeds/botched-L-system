@@ -4,11 +4,11 @@ import { BigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
-var id = "botched_l_system";
+var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, and try to stop it before the database slows down to a crawl and eventually explode in a fatal ERROR.\n\nAn explanation of L-systems:\n\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nThis theory will not draw a tree based on these rules due to the sheer size, but only simulates the number of characters in the sequence.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.4;  // Will be 0.5 after self-testing, then send to Discord and upload to GitHub
+var version = 0.4;  // Will be 0.5 after self-testing, then send to Discord
 
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
@@ -132,6 +132,7 @@ var init = () =>
     currency = theory.createCurrency();
 
     // q1 (Tickspeed)
+    // Starts with 0, then goes to 1 and beyond?
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
         let getDescNum = (level) => "q_1=" + getQ1(level).toString();
@@ -141,6 +142,7 @@ var init = () =>
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // q2 (Tickspeed)
+    // Literally the same as q1, just more expensive
     {
         let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
@@ -165,19 +167,26 @@ var init = () =>
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
     }
 
+    // Auto-buyer comes first to create a sense of leisure
     theory.createPublicationUpgrade(0, currency, 1e8);
     theory.createAutoBuyerUpgrade(1, currency, 1e16);
     theory.createBuyAllUpgrade(2, currency, 1e24);
 
+    // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(16, 16));
 
+    // Tick limiter: locks tickspeed to a certain value.
+    // The first level will most likely give a growth boost,
+    // but the second level acts more like lag prevention.
+    // Lag is the main mechanic of this theory.
     {
         tickLimiter = theory.createMilestoneUpgrade(0, 2);
         tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", tickLimiter.level > 0 ? "10" : "640");
-        tickLimiter.info = "Forces tickspeed regardless of variable levels";
+        tickLimiter.info = "Locks tickspeed regardless of variable levels";
         tickLimiter.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
 
+    // Branch weight: gives a flat multiplication bonus.
     {
         branchWeight = theory.createMilestoneUpgrade(1, 1);
         branchWeight.description = Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight";
@@ -189,6 +198,7 @@ var init = () =>
         }
     }
 
+    // c1 exponent upgrade.
     {
         c1Exp = theory.createMilestoneUpgrade(2, 6);
         c1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.02");
@@ -196,9 +206,10 @@ var init = () =>
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
     }
 
-    chapter1 = theory.createStoryChapter(0, "L-systems", "I am very sure.\nWheat this fractal plant, we will be able to attract funding for further research.\n\nNow, turn it on, and watch the magic happen.", () => true);
+    chapter1 = theory.createStoryChapter(0, "L-system", "I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research.\n\nNow turn it on, and watch the magic happen.", () => true);
 }
 
+// I copied this from Gilles' T1. Not copyrighted.
 var tick = (elapsedTime, multiplier) =>
 {
     let tickspeed = getTickspeed(tickLimiter.level);
