@@ -136,7 +136,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
         let getDescNum = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(8, 3)));
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -234,7 +234,11 @@ var tick = (elapsedTime, multiplier) =>
         rho = matMul(rho, exp);
         currency.value += (matMul(rho, getWeight(branchWeight.level))[0][0]).log2() * bonus * vc1 * vc2;
 
-        time = 0;
+        if(tickspeed > BigNumber.TEN)
+            time = 0;
+        else
+            time -= timeLimit;
+
         theory.invalidateQuaternaryValues();
     }
 }
