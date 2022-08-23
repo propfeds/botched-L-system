@@ -428,10 +428,10 @@ var getQuaternaryEntries = () =>
         quaternaryEntries.push(new QuaternaryEntry("-", null));
     }
 
-    // if(1 + 2 > 2)
-    //     quaternaryEntries[0].value = rho[0][0].toString(0);
-    // else
-    //     quaternaryEntries[0].value = null;
+    if(evolution.level > 1)
+        quaternaryEntries[0].value = rho[0][0].toString(0);
+    else
+        quaternaryEntries[0].value = null;
     quaternaryEntries[1].value = rho[0][1].toString(0);
     quaternaryEntries[2].value = rho[0][2].toString(0);
     if(evolution.level > 0)
