@@ -1,14 +1,14 @@
-﻿import { ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
-import { Localization } from "../api/Localization";
-import { BigNumber } from "../api/BigNumber";
-import { QuaternaryEntry, theory } from "../api/Theory";
-import { Utils } from "../api/Utils";
+﻿import { ExponentialCost, FirstFreeCost, LinearCost } from "../../api/Costs";
+import { Localization } from "../../api/Localization";
+import { BigNumber } from "../../api/BigNumber";
+import { QuaternaryEntry, theory } from "../../api/Theory";
+import { Utils } from "../../api/Utils";
 
 var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, and try to stop it before the database slows down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.7;
+var version = 0.6;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -50,34 +50,17 @@ var matPow = (A, n) =>
     
     let exp = n;
     let p = 0;
-    let c = 0;
     let result = idMat(A.length);
     while(exp)
     {
         if(rulePowers[p] === undefined)
             rulePowers[p] = matMul(rulePowers[p-1], rulePowers[p-1]);
         if(exp & 1)
-        {
             result = matMul(result, rulePowers[p]);
-            c++;
-        }
         exp >>= 1;
         p++;
     }
-    bitCount = c;
     return result;
-}
-
-var printMat = (A) =>
-{
-    let row = "";
-    for(let i = 0; i < A.length; i++)
-    {
-        for(let j = 0; j < A[i].length; j++)
-            row += A[i][j].toString()+" ";
-        log(row);
-        row = "";
-    }
 }
 
 var updateBitCount = (n) =>
@@ -92,6 +75,19 @@ var updateBitCount = (n) =>
     }
     bitCount = c;
 }
+
+var printMat = (A) =>
+{
+    let row = "";
+    for(let i = 0; i < A.length; i++)
+    {
+        for(let j = 0; j < A[i].length; j++)
+            row += A[i][j].toString()+" ";
+        log(row);
+        row = "";
+    }
+}
+
 
 var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
 
@@ -140,20 +136,21 @@ var init = () =>
     // q1 (Tickspeed)
     // Starts with 0, then goes to 1 and beyond?
     {
-        let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
-        let getDescNum = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 3)));
-        q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
-        q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
+        
+        let getDesc = (level) => "q_1=" + getQ1(level).toString(0);
+        let getDescFlair = (level) => "q_1=" + (level > 0 ? getQ1(level).toString(0) : "\\text{off}");
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(8, 3)));
+        q1.getDescription = (_) => Utils.getMath(getDescFlair(q1.level));
+        q1.getInfo = (amount) => Utils.getMathTo(getDesc(q1.level), getDesc(q1.level + amount));
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
         q1.canBeRefunded = (_) => true;
     }
     // q2 (Tickspeed)
     // Literally the same as q1, just more expensive
     {
-        let getDesc = (level) => "q_2=4^{" + level + "}";
+        let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
-        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e6, Math.log2(1e8)));
+        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e6, Math.log2(1e3)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
         q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -246,7 +243,6 @@ var tick = (elapsedTime, multiplier) =>
 
         time = 0;
 
-        theory.invalidateTertiaryEquation();
         theory.invalidateQuaternaryValues();
     }
 }
@@ -266,7 +262,7 @@ var setInternalState = (state) =>
 
 var alwaysShowRefundButtons = () =>
 {
-        return false;
+        return true;
 }
 
 var getPrimaryEquation = () =>
@@ -309,6 +305,8 @@ var getTertiaryEquation = () =>
 {
     let result = "\\begin{matrix}";
     result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString(0));
+    
+    updateBitCount(getTickspeed(0).toNumber());
     result += "\\text{, bits: }";
     result += bitCount.toString();
     result += "\\end{matrix}";
@@ -360,8 +358,8 @@ var postPublish = () =>
     theory.invalidateQuaternaryValues();
 }
 
-var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
-var getQ2 = (level) => BigNumber.FOUR.pow(level);
+var getQ1 = (level) => Utils.getStepwisePowerSum(level, 5, 5, 0);
+var getQ2 = (level) => BigNumber.TWO.pow(level);
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
 var getC2 = (level) => BigNumber.TWO.pow(level);

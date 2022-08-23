@@ -73,7 +73,7 @@ var matMul = (m1, m2) =>
     return result;
 }
 
-var matPow = (A, n) =>
+var matPow = (A, n, cache) =>
 {
     if(n < 1)
         return idMat(A.length);
@@ -85,10 +85,10 @@ var matPow = (A, n) =>
     let result = idMat(A.length);
     while(exp)
     {
-        if(rulePowers[p] === undefined)
-            rulePowers[p] = matMul(rulePowers[p-1], rulePowers[p-1]);
+        if(cache[p] === undefined)
+            cache[p] = matMul(cache[p-1], cache[p-1]);
         if(exp%2)
-            result = matMul(result, rulePowers[p]);
+            result = matMul(result, cache[p]);
         exp >>= 1;
         p++;
     }
@@ -107,6 +107,11 @@ var printMat = (A) =>
     }
 }
 
+// Axiom X
+// F --> FF
+// X --> F-[[X]+X]+F[+FX]-X
+// ø = 22.5
+// Symbols: FX+-[]
 
 var rho = bigNumberArray([[0, 1, 0, 0, 0, 0]]);
 var rules = bigNumberArray([
@@ -120,11 +125,10 @@ var rules = bigNumberArray([
 var rulePowers = [rules];
 var rhoPowers = [];
 
-
-for(var i = 1; i < 8; i++)
+for(var i = 8; i < 12; i++)
 {
     console.log(i);
-    rhoPowers[i-1] = matMul(rho, matPow(rules, i));
+    rhoPowers[i-1] = matMul(rho, matPow(rules, i, rulePowers));
     printMat(rhoPowers[i-1]);
 }
 // 3, 18, 84, 360, 1488, 6048, 24384
@@ -133,3 +137,30 @@ for(var i = 1; i < 8; i++)
 // 3(2^n-1)
 // 1, 3, 7, 15, 31, 63, 127
 // 2^n - 1
+
+
+// Axiom X
+// E --> XEXF
+// F --> FF+E
+// X --> F-[[X]+X]+F[+FX]-X
+// ø = 22.5
+// Symbols: EFX+-[
+
+var rho2 = bigNumberArray([[0, 0, 1, 0, 0, 0]]);
+var rules2 = bigNumberArray([
+    [1, 1, 2, 0, 0, 0],
+    [1, 2, 0, 1, 0, 0],
+    [0, 3, 4, 3, 2, 3],
+    [0, 0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 0, 1]
+]);
+var rule2Powers = [rules2];
+var rho2Powers = [];
+
+for(var i = 1; i < 12; i++)
+{
+    console.log(i);
+    rho2Powers[i-1] = matMul(rho2, matPow(rules2, i, rule2Powers));
+    printMat(rho2Powers[i-1]);
+}
