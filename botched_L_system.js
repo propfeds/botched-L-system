@@ -40,7 +40,7 @@ var matMul = (A, B) =>
         )
     )
 
-var matPow = (A, n) =>
+var matPow = (A, n, cache) =>
 {
     // log(n);
     if(n < 1)
@@ -50,21 +50,18 @@ var matPow = (A, n) =>
     
     let exp = n;
     let p = 0;
-    let c = 0;
     let result = idMat(A.length);
     while(exp)
     {
-        if(rulePowers[p] === undefined)
-            rulePowers[p] = matMul(rulePowers[p-1], rulePowers[p-1]);
+        if(cache[p] === undefined)
+            cache[p] = matMul(cache[p-1], cache[p-1]);
         if(exp & 1)
         {
-            result = matMul(result, rulePowers[p]);
-            c++;
+            result = matMul(result, cache[p]);
         }
         exp >>= 1;
         p++;
     }
-    bitCount = c;
     return result;
 }
 
@@ -80,7 +77,7 @@ var printMat = (A) =>
     }
 }
 
-var updateBitCount = (n) =>
+var bitCount = (n) =>
 {
     let exp = n;
     let c = 0;
@@ -90,7 +87,7 @@ var updateBitCount = (n) =>
             c++;
         exp >>= 1;
     }
-    bitCount = c;
+    return c;
 }
 
 var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
@@ -109,6 +106,7 @@ var rules = bigNumMat([
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1],
 ]);
+// Stores rule^1, ^2, ^4, ^8, etc.
 var rulePowers = [rules];
 var weight = bigNumMat([
     [0.5],
@@ -125,12 +123,14 @@ var weightWithBranch = bigNumMat([
     [2]
 ]);
 var limitedTickspeed = bigNumList([1200, 160, 160]);
+var ltsBitCount = [4, 1, 1];
 var time = 0;
-var bitCount = 0;
+var bits = 0;
 var currency;
 var q1, q2, c1, c2;
 var tickLimiter, branchWeight, c1Exp;
 var quaternaryEntries = [];
+var bitCountMap = new Map();
 
 
 var init = () =>
@@ -224,24 +224,37 @@ var init = () =>
 // I copied this from Gilles' T1. Not copyrighted.
 var tick = (elapsedTime, multiplier) =>
 {
-    let tickspeed = getTickspeed(tickLimiter.level);
+    let tickSpeed = getTickspeed(tickLimiter.level);
 
-    if(tickspeed.isZero)
+    if(tickSpeed.isZero)
         return;
     
-    let timeLimit = 1 / tickspeed.Min(BigNumber.TEN).toNumber();
+    let timeLimit = 1 / tickSpeed.Min(BigNumber.TEN).toNumber();
     time += elapsedTime;
 
     if(time >= timeLimit - 1e-8)
     {
-        let tickPower = tickspeed.toNumber() * time;
+        let tickPower = Math.round(tickSpeed.toNumber() * time);
+        if(tickLimiter.level > 0)
+        {
+            let origTickPower = Math.round(getTickspeed(0).toNumber() * time);
+            if(!bitCountMap.has(origTickPower))
+                bitCountMap.set(origTickPower, bitCount(origTickPower));
+            bits = bitCountMap.get(origTickPower);
+        }
+        else
+        {
+            if(!bitCountMap.has(tickPower))
+                bitCountMap.set(tickPower, bitCount(tickPower));
+            bits = bitCountMap.get(tickPower);
+        }
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
-        let exp = matPow(rules, Math.round(tickPower));
-        rho = matMul(rho, exp);
+
+        rho = matMul(rho, matPow(rules, tickPower, rulePowers));
         currency.value += (matMul(rho, getWeight(branchWeight.level))[0][0]).log2() * bonus * vc1 * vc2;
 
         time = 0;
@@ -266,7 +279,7 @@ var setInternalState = (state) =>
 
 var alwaysShowRefundButtons = () =>
 {
-        return false;
+    return true;
 }
 
 var getPrimaryEquation = () =>
@@ -310,7 +323,12 @@ var getTertiaryEquation = () =>
     let result = "\\begin{matrix}";
     result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString(0));
     result += "\\text{, bits: }";
-    result += bitCount.toString();
+    if(tickLimiter.level > 0)
+    {
+        result += ltsBitCount[tickLimiter.level - 1].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
+    }
+    else
+        result += bits.toString();
     result += "\\end{matrix}";
 
     return result;
