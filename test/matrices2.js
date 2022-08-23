@@ -125,19 +125,17 @@ var rules = bigNumberArray([
 var rulePowers = [rules];
 var rhoPowers = [];
 
-for(var i = 8; i < 12; i++)
-{
-    console.log(i);
-    rhoPowers[i-1] = matMul(rho, matPow(rules, i, rulePowers));
-    printMat(rhoPowers[i-1]);
-}
-// 3, 18, 84, 360, 1488, 6048, 24384
-// 3(2^n-1)*2^(n-1)
-// 3, 9, 21, 45, 93, 189, 381
-// 3(2^n-1)
-// 1, 3, 7, 15, 31, 63, 127
-// 2^n - 1
-
+var rho2 = bigNumberArray([[0, 1, 0, 0, 0, 0]]);
+var rules2 = bigNumberArray([
+    [2, 1, 0, 0, 0, 0],
+    [3, 4, 3, 2, 3, 3],
+    [0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0],
+    [0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 0, 1]
+]);
+var rule2Powers = [rules2];
+var rho2Powers = [];
 
 // Axiom X
 // E --> XEXF
@@ -146,21 +144,30 @@ for(var i = 8; i < 12; i++)
 // ø = 22.5
 // Symbols: EFX+-[
 
-var rho2 = bigNumberArray([[0, 0, 1, 0, 0, 0]]);
-var rules2 = bigNumberArray([
-    [1, 1, 2, 0, 0, 0],
-    [1, 2, 0, 1, 0, 0],
-    [0, 3, 4, 3, 2, 3],
-    [0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 1]
-]);
-var rule2Powers = [rules2];
-var rho2Powers = [];
+// var rho2 = bigNumberArray([[0, 0, 1, 0, 0, 0]]);
+// var rules2 = bigNumberArray([
+//     [1, 1, 2, 0, 0, 0],
+//     [1, 2, 0, 1, 0, 0],
+//     [0, 3, 4, 3, 2, 3],
+//     [0, 0, 0, 1, 0, 0],
+//     [0, 0, 0, 0, 1, 0],
+//     [0, 0, 0, 0, 0, 1]
+// ]);
+// var rule2Powers = [rules2];
+// var rho2Powers = [];
 
 for(var i = 1; i < 12; i++)
 {
     console.log(i);
+    rhoPowers[i-1] = matMul(rho, matPow(rules, i, rulePowers));
     rho2Powers[i-1] = matMul(rho2, matPow(rules2, i, rule2Powers));
+    printMat(rhoPowers[i-1]);
     printMat(rho2Powers[i-1]);
 }
+
+// 3, 18, 84, 360, 1488, 6048, 24384
+// 3(2^n-1)*2^(n-1)
+// 3, 9, 21, 45, 93, 189, 381
+// 3(2^n-1)
+// 1, 3, 7, 15, 31, 63, 127
+// 2^n - 1

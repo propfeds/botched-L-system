@@ -1,6 +1,6 @@
 ﻿import { ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
 import { Localization } from "../api/Localization";
-import { BigNumber } from "../api/BigNumber";
+import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
@@ -95,40 +95,70 @@ var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q
 // Axiom X
 // F --> FF
 // X --> F-[[X]+X]+F[+FX]-X
-// ø = 22.5
+
+// Axiom X
+// F --> FXF
+// X --> F-[[X]+X]+F[+FX]-X
+
+// Axiom X
+// E --> XEXF
+// F --> FF[X]+E
+// X --> F-[[X]+X]+F[+FX]-X
+
 // Symbols: EFX+-[] ([] are not calculated!)
 
 var rho = bigNumMat([[0, 0, 1, 0, 0]]);
-var rules = bigNumMat([
+var rules = [bigNumMat([
     [0, 0, 0, 0, 0],
     [0, 2, 0, 0, 0],
     [0, 3, 4, 3, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1],
-]);
+]), bigNumMat([
+    [0, 0, 0, 0, 0],
+    [0, 2, 1, 0, 0],
+    [0, 3, 4, 3, 2],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1],
+]), bigNumMat([
+    [1, 1, 2, 0, 0],
+    [1, 2, 1, 0, 0],
+    [0, 3, 4, 3, 2],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1]
+])];
 // Stores rule^1, ^2, ^4, ^8, etc.
-var rulePowers = [rules];
-var weight = bigNumMat([
-    [0.5],
+var rulePowers = [
+    [rules[0]],
+    [rules[1]],
+    [rules[2]]
+];
+var weight = [bigNumMat([
+    [0],
     [0.5],
     [1],
     [0],
     [0]
-]);
-var weightWithBranch = bigNumMat([
-    [0.5],
+]), bigNumMat([
+    [0],
     [0.5],
     [1],
     [2],
     [2]
-]);
+]), bigNumMat([
+    [1],
+    [1],
+    [1.5],
+    [2],
+    [2]
+])];
 var limitedTickspeed = bigNumList([1200, 160, 160]);
 var ltsBitCount = [4, 1, 1];
 var time = 0;
 var bits = 0;
 var currency;
 var q1, q2, c1, c2;
-var tickLimiter, branchWeight, c1Exp;
+var tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
 
@@ -178,8 +208,8 @@ var init = () =>
     }
 
     theory.createPublicationUpgrade(0, currency, 1e8);
-    theory.createBuyAllUpgrade(1, currency, 1e16);
-    theory.createAutoBuyerUpgrade(2, currency, 1e24);
+    // theory.createBuyAllUpgrade(1, currency, 1e16);
+    // theory.createAutoBuyerUpgrade(2, currency, 1e24);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(16, 16));
@@ -197,11 +227,12 @@ var init = () =>
 
     // Branch weight: gives a flat multiplication bonus.
     {
-        branchWeight = theory.createMilestoneUpgrade(1, 1);
-        branchWeight.description = Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight";
-        branchWeight.info = "Raises awareness about the beauty of fractal curves";
-        branchWeight.boughtOrRefunded = (_) =>
+        evolution = theory.createMilestoneUpgrade(1, 2);
+        evolution.getDescription = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight" : "Evolve into the cultivar XEXF");
+        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? "Raises public awareness about the beauty of fractal curves" : "Raises internal awareness about the beauty of evolution");
+        evolution.boughtOrRefunded = (_) =>
         {
+            theory.invalidatePrimaryEquation();
             theory.invalidateSecondaryEquation();
             theory.invalidateQuaternaryValues();
         }
@@ -216,9 +247,9 @@ var init = () =>
     }
 
     chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!\n\nNow turn it on, watch it rice, and magic will happen.'", () => true);
-    chapter2 = theory.createStoryChapter(1, "Limiter", "My colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.\n\n...Doesn't even work.\nWhy does it actually increase the speed!?", () => tickLimiter.level > 0);
-    chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => branchWeight.level > 0);
-    chapter4 = theory.createStoryChapter(3, "Binary Exponents", "TODO: write a chapter that explains the log2 matrix power algorithm and tells the player why they should aim for a (tickspeed/10) value that has the fewest binary 1 digits in order to not lag the database. Or maybe not? I need to confirm whether this approach actually works.", () => tickLimiter.level > 1);
+    chapter2 = theory.createStoryChapter(1, "Limiter", "My colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
+    chapter4 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\nthe catastrophe.", () => tickLimiter.level > 1);
 }
 
 // I copied this from Gilles' T1. Not copyrighted.
@@ -254,8 +285,9 @@ var tick = (elapsedTime, multiplier) =>
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
 
-        rho = matMul(rho, matPow(rules, tickPower, rulePowers));
-        currency.value += (matMul(rho, getWeight(branchWeight.level))[0][0]).log2() * bonus * vc1 * vc2;
+        growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level])
+        rho = matMul(rho, growth);
+        currency.value += (matMul(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
 
         time = 0;
 
@@ -264,17 +296,18 @@ var tick = (elapsedTime, multiplier) =>
     }
 }
 
-var getInternalState = () => `${rho[0][0]} ${rho[0][1]} ${rho[0][2]} ${rho[0][3]} ${rho[0][4]} ${time}`
+var getInternalState = () => `${currency.value} ${rho[0][0]} ${rho[0][1]} ${rho[0][2]} ${rho[0][3]} ${rho[0][4]} ${time}`
 
 var setInternalState = (state) =>
 {
     let values = state.split(" ");
-    if(values.length > 0) rho[0][0] = parseBigNumber(values[0]);
-    if(values.length > 1) rho[0][1] = parseBigNumber(values[1]);
-    if(values.length > 2) rho[0][2] = parseBigNumber(values[2]);
-    if(values.length > 3) rho[0][3] = parseBigNumber(values[3]);
-    if(values.length > 4) rho[0][4] = parseBigNumber(values[4]);
-    if(values.length > 5) time = parseBigNumber(values[5]);
+    if(values.length > 0) currency.value = parseBigNumber(values[0])
+    if(values.length > 1) rho[0][0] = parseBigNumber(values[1]);
+    if(values.length > 2) rho[0][1] = parseBigNumber(values[2]);
+    if(values.length > 3) rho[0][2] = parseBigNumber(values[3]);
+    if(values.length > 4) rho[0][3] = parseBigNumber(values[4]);
+    if(values.length > 5) rho[0][4] = parseBigNumber(values[5]);
+    if(values.length > 6) time = parseBigNumber(values[6]);
 }
 
 var alwaysShowRefundButtons = () =>
@@ -282,11 +315,33 @@ var alwaysShowRefundButtons = () =>
     return true;
 }
 
+// Axiom X
+// F --> FF
+// X --> F-[[X]+X]+F[+FX]-X
+
+// Axiom X
+// F --> FXF
+// X --> F-[[X]+X]+F[+FX]-X
+
+// Axiom X
+// E --> XEXF
+// F --> FF[X]+E
+// X --> F-[[X]+X]+F[+FX]-X
+
 var getPrimaryEquation = () =>
 {
     let result = "\\begin{matrix}";
     result += "Axiom\:\\text{X}\\\\";
-    result += "\\text{F}\\rightarrow{}\\text{FF}\\\\";
+    switch(evolution.level)
+    {
+        case 0: result += "\\text{F}\\rightarrow{}\\text{FF}\\\\";
+        break;
+        case 1: result += "\\text{F}\\rightarrow{}\\text{FXF}\\\\";
+        break;
+        case 2: result += "\\text{E}\\rightarrow{}\\text{XEXF, }";
+        result += "\\text{F}\\rightarrow{}\\text{FF[X]+E}\\\\";
+        break
+    }
     result += "\\text{X}\\rightarrow{}\\text{F-[[X]+X]+F[+FX]-X}";
     result += "\\end{matrix}";
 
@@ -295,6 +350,26 @@ var getPrimaryEquation = () =>
 
     return result;
 }
+
+// [0],
+// [0.5],
+// [1],
+// [0],
+// [0]
+//
+// [0],
+// [0.5],
+// [1],
+// [2],
+// [2]
+//
+// [1],
+// [1],
+// [1.5],
+// [2],
+// [2]
+
+// Symbols: EFX+-[] ([] are not calculated!)
 
 var getSecondaryEquation = () =>
 {
@@ -306,9 +381,17 @@ var getSecondaryEquation = () =>
     if(c1Exp.level == 4) result += "^{1.08}";
     if(c1Exp.level == 5) result += "^{1.10}";
     if(c1Exp.level == 6) result += "^{1.12}";
-    result += "c_2\\log_{2}(0.5F+X";
-    if(branchWeight.level > 0) result += "+2(+)+2(-)";
-    result += ")\\\\";
+    result += "c_2\\log_{2}\\text{";
+    switch(evolution.level)
+    {
+        case 0: result += "(0.5F+X)";
+        break;
+        case 1: result += "(0.5F+X+2(+)+2(-))";
+        break;
+        case 2: result += "(E+F+1.5X+2(+)+2(-))";
+        break;
+    }
+    result += "}\\\\";
     result += theory.latexSymbol;
     result += "=\\max\\rho";
     result += "\\end{matrix}";
@@ -351,7 +434,7 @@ var getQuaternaryEntries = () =>
     //     quaternaryEntries[0].value = null;
     quaternaryEntries[1].value = rho[0][1].toString(0);
     quaternaryEntries[2].value = rho[0][2].toString(0);
-    if(branchWeight.level > 0)
+    if(evolution.level > 0)
     {
         quaternaryEntries[3].value = rho[0][3].toString(0);
         quaternaryEntries[4].value = rho[0][4].toString(0);
@@ -384,6 +467,5 @@ var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
 var getC2 = (level) => BigNumber.TWO.pow(level);
 var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
-var getWeight = (level) => (level > 0 ? weightWithBranch : weight);
 
 init();
