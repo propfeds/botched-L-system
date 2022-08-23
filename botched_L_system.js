@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, and try to stop it before the database slows down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.5;
+var version = 0.6;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -136,7 +136,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
         let getDescNum = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(8, 3)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -162,7 +162,7 @@ var init = () =>
     {
         let getDesc = (level) => "c_2=2^{" + level + "}";
         let getInfo = (level) => "c_2=" + getC2(level).toString(0);
-        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 6));
+        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 5));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
     }
@@ -222,18 +222,19 @@ var tick = (elapsedTime, multiplier) =>
     let timeLimit = 1 / tickspeed.Min(BigNumber.TEN).toNumber();
     time += elapsedTime;
 
-    if(time >= timeLimit-1e-8)
+    if(time >= timeLimit - 1e-8)
     {
-        let tickPower = tickspeed*BigNumber.from(time*multiplier);
+        let tickPower = tickspeed * BigNumber.from(time);
+        // log(tickPower);
 
-        let bonus = theory.publicationMultiplier;
+        let bonus = theory.publicationMultiplier * multiplier;
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
         let exp = matPow(rules, Math.round(tickPower.toNumber()));
         rho = matMul(rho, exp);
         currency.value += (matMul(rho, getWeight(branchWeight.level))[0][0]).log2() * bonus * vc1 * vc2;
 
-        time -= timeLimit;
+        time = 0;
         theory.invalidateQuaternaryValues();
     }
 }
@@ -307,6 +308,11 @@ var getQuaternaryEntries = () =>
         quaternaryEntries[2].value = rho[0][2].toString(0);
         quaternaryEntries[3].value = rho[0][3].toString(0);
     }
+    else
+    {
+        quaternaryEntries[2].value = null;
+        quaternaryEntries[3].value = null;
+    }
 
     return quaternaryEntries;
 }
@@ -321,6 +327,7 @@ var postPublish = () =>
     time = 0;
     rho = bigNumMat([[0, 1, 0, 0, 0, 0]])
     theory.invalidateTertiaryEquation();
+    theory.invalidateQuaternaryValues();
 }
 
 var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
