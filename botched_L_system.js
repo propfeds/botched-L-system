@@ -6,12 +6,12 @@ import { Utils } from "../api/Utils";
 
 var id = "botched_L_system";
 var name = "Botched L-system";
-var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, and try to stop it before the database slows down to a crawl and eventually explode in a fatal ERROR.\n\nAn explanation of L-systems:\n\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nThis theory will not draw a tree based on these rules due to the sheer size, but only simulates the number of characters in the sequence.";
+var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, and try to stop it before the database slows down to a crawl and eventually explode in a fatal ERROR.\n\nAn explanation of L-systems:\n\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nThis theory will not draw a tree based on these rules due to the sheer size.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.4;  // Will be 0.5 after self-testing, then send to Discord
-
+var version = 0.5;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
+
 var bigNumList = (array) => array.map(x => BigNumber.from(x));
 
 var idMat = (size) =>
@@ -119,7 +119,7 @@ var weightWithBranch = bigNumMat([
     [0],
     [0]
 ]);
-var limitedTickspeed = bigNumList([640, 10]);
+var limitedTickspeed = bigNumList([1200, 160, 160]);
 var time = 0;
 var currency;
 var q1, q2, c1, c2;
@@ -167,10 +167,9 @@ var init = () =>
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
     }
 
-    // Auto-buyer comes first to create a sense of leisure
     theory.createPublicationUpgrade(0, currency, 1e8);
-    theory.createAutoBuyerUpgrade(1, currency, 1e16);
-    theory.createBuyAllUpgrade(2, currency, 1e24);
+    theory.createBuyAllUpgrade(1, currency, 1e16);
+    theory.createAutoBuyerUpgrade(2, currency, 1e24);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(16, 16));
@@ -181,7 +180,7 @@ var init = () =>
     // Lag is the main mechanic of this theory.
     {
         tickLimiter = theory.createMilestoneUpgrade(0, 2);
-        tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", tickLimiter.level > 0 ? "10" : "640");
+        tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", limitedTickspeed[tickLimiter.level].toString(0));
         tickLimiter.info = "Locks tickspeed regardless of variable levels";
         tickLimiter.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
@@ -206,7 +205,10 @@ var init = () =>
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
     }
 
-    chapter1 = theory.createStoryChapter(0, "L-system", "I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research.\n\nNow turn it on, and watch the magic happen.", () => true);
+    chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!\n\nNow turn it on, watch it rice, and magic will happen.'", () => true);
+    chapter2 = theory.createStoryChapter(1, "Limiter", "My colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.\n\n...Doesn't even work.\nWhy does it actually increase the speed!?", () => tickLimiter.level > 0);
+    chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => branchWeight.level > 0);
+    chapter4 = theory.createStoryChapter(3, "Binary Exponents", "TODO: write a chapter that explains the log2 matrix power algorithm and tells the player why they should aim for a (tickspeed/10) value that has the fewest binary 1 digits in order to not lag the database. Or maybe not? I need to confirm whether this approach actually works.", () => tickLimiter.level > 1);
 }
 
 // I copied this from Gilles' T1. Not copyrighted.
@@ -227,7 +229,7 @@ var tick = (elapsedTime, multiplier) =>
         let bonus = theory.publicationMultiplier;
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
-        let exp = matPow(rules, Math.floor(tickPower.toNumber()));
+        let exp = matPow(rules, Math.round(tickPower.toNumber()));
         rho = matMul(rho, exp);
         currency.value += (matMul(rho, getWeight(branchWeight.level))[0][0]).log2() * bonus * vc1 * vc2;
 
@@ -298,12 +300,12 @@ var getQuaternaryEntries = () =>
         quaternaryEntries.push(new QuaternaryEntry("-", null));
     }
 
-    quaternaryEntries[0].value = rho[0][0].toString();
-    quaternaryEntries[1].value = rho[0][1].toString();
+    quaternaryEntries[0].value = rho[0][0].toString(0);
+    quaternaryEntries[1].value = rho[0][1].toString(0);
     if(branchWeight.level > 0)
     {
-        quaternaryEntries[2].value = rho[0][2].toString();
-        quaternaryEntries[3].value = rho[0][3].toString();
+        quaternaryEntries[2].value = rho[0][2].toString(0);
+        quaternaryEntries[3].value = rho[0][3].toString(0);
     }
 
     return quaternaryEntries;
