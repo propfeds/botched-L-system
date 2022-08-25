@@ -183,7 +183,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_2=4^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
-        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e6, Math.log2(1e8)));
+        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e8, Math.log2(1e8)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
         q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -201,7 +201,7 @@ var init = () =>
     {
         let getDesc = (level) => "c_2=2^{" + level + "}";
         let getInfo = (level) => "c_2=" + getC2(level).toString(0);
-        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 5));
+        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 4));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
         c2.canBeRefunded = (_) => false;
@@ -289,7 +289,10 @@ var tick = (elapsedTime, multiplier) =>
         rho = matMul(rho, growth);
         currency.value += (matMul(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
 
-        time = 0;
+        if(tickSpeed > BigNumber.TEN)
+            time = 0;
+        else
+            time -= timeLimit;
 
         theory.invalidateTertiaryEquation();
         theory.invalidateQuaternaryValues();
@@ -407,7 +410,7 @@ var getSecondaryEquation = () =>
 var getTertiaryEquation = () =>
 {
     let result = "\\begin{matrix}";
-    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString(0));
+    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level > 0 ? 0 : 2)));
     result += "\\text{, bits: }";
     if(tickLimiter.level > 0)
     {
@@ -464,7 +467,7 @@ var postPublish = () =>
     theory.invalidateQuaternaryValues();
 }
 
-var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
+var getQ1 = (level) => (level < 1 ? 0 : BigNumber.from(1.28).pow(level - 1));
 var getQ2 = (level) => BigNumber.FOUR.pow(level);
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
