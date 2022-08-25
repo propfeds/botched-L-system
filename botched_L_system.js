@@ -440,7 +440,9 @@ var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.valu
 var postPublish = () =>
 {
     time = 0;
-    rho = bigNumMat([[0, 0, 1, 0, 0]])
+    bits = 0;
+    bitCountMap.clear();
+    rho = bigNumMat([[0, 0, 1, 0, 0]]);
     theory.invalidateTertiaryEquation();
     theory.invalidateQuaternaryValues();
 }
