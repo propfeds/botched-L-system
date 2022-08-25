@@ -40,6 +40,16 @@ var matMul = (A, B) =>
         )
     )
 
+// var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
+var elemMatPow = (A, B) =>
+    A.map((row, i) =>
+        B[0].map((_, j) =>
+            row.reduce((acc, _, n) =>
+                acc + A[i][n].pow(B[n][j]), BigNumber.ZERO
+            )
+        )
+    )
+
 var matPow = (A, n, cache) =>
 {
     // log(n);
@@ -65,18 +75,6 @@ var matPow = (A, n, cache) =>
     return result;
 }
 
-var printMat = (A) =>
-{
-    let row = "";
-    for(let i = 0; i < A.length; i++)
-    {
-        for(let j = 0; j < A[i].length; j++)
-            row += A[i][j].toString()+" ";
-        log(row);
-        row = "";
-    }
-}
-
 var bitCount = (n) =>
 {
     let exp = n;
@@ -88,6 +86,18 @@ var bitCount = (n) =>
         exp >>= 1;
     }
     return c;
+}
+
+var printMat = (A) =>
+{
+    let row = "";
+    for(let i = 0; i < A.length; i++)
+    {
+        for(let j = 0; j < A[i].length; j++)
+            row += A[i][j].toString() + " ";
+        log(row);
+        row = "";
+    }
 }
 
 var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
@@ -287,7 +297,7 @@ var tick = (elapsedTime, multiplier) =>
 
         growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level])
         rho = matMul(rho, growth);
-        currency.value += (matMul(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
+        currency.value += (elemMatPow(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
 
         if(tickSpeed > BigNumber.TEN)
             time = 0;
@@ -387,11 +397,11 @@ var getSecondaryEquation = () =>
     result += "c_2\\log_{2}\\text{";
     switch(evolution.level)
     {
-        case 0: result += "(0.5F+X)";
+        case 0: result += "({F}^{0.5}+X)";
         break;
-        case 1: result += "(0.5F+X+2(+)+2(-))";
+        case 1: result += "({F}^{0.5}+X+{(+)}^{2}+{(-)}^{2})";
         break;
-        case 2: result += "(E+F+1.5X+2(+)+2(-))";
+        case 2: result += "(E+F+{X}^{1.5}+{(+)}^{2}+{(-)}^{2})";
         break;
     }
     result += "}\\\\";
@@ -410,7 +420,7 @@ var getSecondaryEquation = () =>
 var getTertiaryEquation = () =>
 {
     let result = "\\begin{matrix}";
-    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level > 0 ? 0 : 2)));
+    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level < 1 ? 2 : 0)));
     result += "\\text{, bits: }";
     if(tickLimiter.level > 0)
     {
@@ -454,8 +464,8 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.192) / BigNumber.FOUR;
-var getPublicationMultiplierFormula = (symbol) => "\\frac{{" + symbol + "}^{0.192}}{4}";
+var getPublicationMultiplier = (tau) => tau.pow(0.16)/* / BigNumber.TWO*/;
+var getPublicationMultiplierFormula = (symbol) => /*"\\frac{" +*/ "{" + symbol + "}^{0.16}" /*+ "}{2}"*/;
 var getTau = () => currency.value;
 var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.value.abs()).log10().toNumber();
 
