@@ -174,6 +174,8 @@ var limitedTickspeed = bigNumList([1200, 160, 160]);
 var ltsBitCount = [4, 1, 1];
 var time = 0;
 var bits = 0;
+var tickPower = 0;
+var origTickPower = 0;
 var currency;
 var q1, q2, c1, c2;
 var tickLimiter, evolution, c1Exp;
@@ -283,20 +285,9 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        let tickPower = Math.round(tickSpeed.toNumber() * time);
+        tickPower = Math.round(tickSpeed.toNumber() * time);
         if(tickLimiter.level > 0)
-        {
-            let origTickPower = Math.round(getTickspeed(0).toNumber() * time);
-            if(!bitCountMap.has(origTickPower))
-                bitCountMap.set(origTickPower, bitCount(origTickPower));
-            bits = bitCountMap.get(origTickPower);
-        }
-        else
-        {
-            if(!bitCountMap.has(tickPower))
-                bitCountMap.set(tickPower, bitCount(tickPower));
-            bits = bitCountMap.get(tickPower);
-        }
+            origTickPower = Math.round(getTickspeed(0).toNumber() * time);
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
@@ -312,7 +303,6 @@ var tick = (elapsedTime, multiplier) =>
         else
             time -= timeLimit;
 
-        theory.invalidateTertiaryEquation();
         theory.invalidateQuaternaryValues();
     }
 }
@@ -399,6 +389,18 @@ var getSecondaryEquation = () =>
 
 var getTertiaryEquation = () =>
 {
+    if(tickLimiter.level > 0)
+    {
+        if(!bitCountMap.has(origTickPower))
+            bitCountMap.set(origTickPower, bitCount(origTickPower));
+        bits = bitCountMap.get(origTickPower);
+    }
+    else
+    {
+        if(!bitCountMap.has(tickPower))
+            bitCountMap.set(tickPower, bitCount(tickPower));
+        bits = bitCountMap.get(tickPower);
+    }
     let result = "\\begin{matrix}";
     result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level < 1 ? 2 : 0)));
     result += "\\text{, bits: }";
