@@ -152,13 +152,13 @@ var rulePowers = [
     [rules[2]]
 ];
 var weight = [bigNumMat([
-    [0],
+    [1],
     [0.5],
     [1],
-    [0],
-    [0]
+    [1],
+    [1]
 ]), bigNumMat([
-    [0],
+    [1],
     [0.5],
     [1],
     [2],
@@ -249,7 +249,7 @@ var init = () =>
     {
         evolution = theory.createMilestoneUpgrade(1, 2);
         evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "Cyclone" : "XEXF");
-        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomExpInfo("(+)/(-)", "2") : Localization.getUpgradeIncCustomExpInfo("F/X", "0.5"));
+        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomExpInfo("(+)/(-)", "1") : Localization.getUpgradeIncCustomExpInfo("F/X", "0.5"));
         evolution.boughtOrRefunded = (_) =>
         {
             theory.invalidatePrimaryEquation();
@@ -285,9 +285,9 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        tickPower = Math.round(tickSpeed.toNumber() * time);
+        tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
         if(tickLimiter.level > 0)
-            origTickPower = Math.round(getTickspeed(0).toNumber() * time);
+            origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
