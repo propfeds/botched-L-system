@@ -6,7 +6,7 @@ import { Utils } from "../api/Utils";
 
 var id = "botched_L_system";
 var name = "Botched L-system";
-var description = "Your school's laboratory has decided to grow a fictional tree in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
+var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
 var authors = "propfeds#5988 (propsuki)";
 var version = 0.7;
 
@@ -228,7 +228,7 @@ var init = () =>
     // Branch weight: gives a flat multiplication bonus.
     {
         evolution = theory.createMilestoneUpgrade(1, 2);
-        evolution.getDescription = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight" : "Evolve into the cultivar XEXF");
+        evolution.getDescription = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight" : Localization.getUpgradeUnlockDesc("E"));
         evolution.getInfo = (amount) => (evolution.level + amount < 2 ? "Raises public awareness about the beauty of fractal curves" : "Raises internal awareness about the beauty of evolution");
         evolution.boughtOrRefunded = (_) =>
         {
@@ -246,7 +246,7 @@ var init = () =>
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
     }
 
-    chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!\n\nNow turn it on, watch it rice, and magic will happen.'", () => true);
+    chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
     chapter2 = theory.createStoryChapter(1, "Limiter", "My colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
     chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
     chapter4 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\nthe catastrophe.", () => tickLimiter.level > 1);
@@ -396,7 +396,10 @@ var getSecondaryEquation = () =>
     result += "=\\max\\rho";
     result += "\\end{matrix}";
 
-    // theory.secondaryEquationScale = 0.95;
+    if(evolution.level > 0)
+        theory.secondaryEquationScale = 0.95;
+    else
+        theory.secondaryEquationScale = 1;
     theory.secondaryEquationHeight = 32;
     return result;
 }
