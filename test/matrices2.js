@@ -111,56 +111,35 @@ var printMat = (A) =>
 // F --> FF
 // X --> F-[[X]+X]+F[+FX]-X
 // ø = 22.5
-// Symbols: FX+-[]
+// Symbols: EFX+-[]
 
-var rho = bigNumberArray([[0, 1, 0, 0, 0, 0]]);
+var rho = bigNumberArray([[0, 0, 1, 0, 0]]);
 var rules = bigNumberArray([
-    [2, 0, 0, 0, 0, 0],
-    [3, 4, 3, 2, 3, 3],
-    [0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 1]
+    [1, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0],
+    [0, 2, 4, 2, 3],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1]
 ]);
 var rulePowers = [rules];
 var rhoPowers = [];
 
-var rho2 = bigNumberArray([[0, 1, 0, 0, 0, 0]]);
 var rules2 = bigNumberArray([
-    [2, 1, 0, 0, 0, 0],
-    [3, 4, 3, 2, 3, 3],
-    [0, 0, 1, 0, 0, 0],
-    [0, 0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 0, 1]
+    [1, 0, 0, 0, 0],
+    [0, 2, 0, 0, 0],
+    [0, 3, 4, 3, 2],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1],
 ]);
 var rule2Powers = [rules2];
 var rho2Powers = [];
 
-// Axiom X
-// E --> XEXF
-// F --> FF+E
-// X --> F-[[X]+X]+F[+FX]-X
-// ø = 22.5
-// Symbols: EFX+-[
-
-// var rho2 = bigNumberArray([[0, 0, 1, 0, 0, 0]]);
-// var rules2 = bigNumberArray([
-//     [1, 1, 2, 0, 0, 0],
-//     [1, 2, 0, 1, 0, 0],
-//     [0, 3, 4, 3, 2, 3],
-//     [0, 0, 0, 1, 0, 0],
-//     [0, 0, 0, 0, 1, 0],
-//     [0, 0, 0, 0, 0, 1]
-// ]);
-// var rule2Powers = [rules2];
-// var rho2Powers = [];
 
 for(var i = 1; i < 12; i++)
 {
     console.log(i);
-    rhoPowers[i-1] = matMul(rho, matPow(rules, i, rulePowers));
-    rho2Powers[i-1] = matMul(rho2, matPow(rules2, i, rule2Powers));
+    rhoPowers[i-1] = matMul(rho, matPow(rules, 1<<i, rulePowers));
+    rho2Powers[i-1] = matMul(rho, matPow(rules2, 1<<i, rule2Powers));
     printMat(rhoPowers[i-1]);
     printMat(rho2Powers[i-1]);
 }

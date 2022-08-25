@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.7;
+var version = 0.08;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -100,40 +100,48 @@ var printMat = (A) =>
     }
 }
 
+
 var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
-
-// Axiom X
-// F --> FF
-// X --> F-[[X]+X]+F[+FX]-X
-
-// Axiom X
-// F --> FXF
-// X --> F-[[X]+X]+F[+FX]-X
-
-// Axiom X
-// E --> XEXF
-// F --> FF[X]+E
-// X --> F-[[X]+X]+F[+FX]-X
-
+var ruleStrings = [[
+    null,
+    "FF",
+    "F-[[X]+X]+F[-X]-X",
+    null,
+    null
+], [
+    null,
+    "F[+F]XF",
+    "F-[[X]+X]+F[-FX]-X",
+    null,
+    null
+], [
+    "XEXF-",
+    "FX+[E]X",
+    "F-[X+[X[++E]F]]+F[+FX]-X",
+    null,
+    null
+]];
 // Symbols: EFX+-[] ([] are not calculated!)
-
+var symbols = ["E", "F", "X", "+", "-"];
+var symUnlockLevel = [2, 0, 0, 1, 1];
+// Axiom X
 var rho = bigNumMat([[0, 0, 1, 0, 0]]);
 var rules = [bigNumMat([
     [1, 0, 0, 0, 0],
     [0, 2, 0, 0, 0],
-    [0, 3, 4, 3, 2],
+    [0, 2, 4, 2, 3],
     [0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 1]
 ]), bigNumMat([
     [1, 0, 0, 0, 0],
-    [0, 2, 1, 0, 0],
-    [0, 3, 4, 3, 2],
+    [0, 3, 1, 1, 0],
+    [0, 3, 4, 2, 3],
     [0, 0, 0, 1, 0],
-    [0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 1]
 ]), bigNumMat([
-    [1, 1, 2, 0, 0],
-    [1, 2, 1, 0, 0],
-    [0, 3, 4, 3, 2],
+    [1, 1, 2, 0, 1],
+    [1, 1, 2, 1, 0],
+    [1, 4, 4, 5, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1]
 ])];
@@ -235,11 +243,11 @@ var init = () =>
         tickLimiter.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
 
-    // Branch weight: gives a flat multiplication bonus.
+    // Branch weight: gives a flat income multiplication and literally no growth.
     {
         evolution = theory.createMilestoneUpgrade(1, 2);
-        evolution.getDescription = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomDesc("(+)/(-)", "2") + " in weight" : Localization.getUpgradeUnlockDesc("E"));
-        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? "Raises public awareness about the beauty of fractal curves" : "Raises internal awareness about the beauty of evolution");
+        evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "Cyclone" : "XEXF");
+        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomExpInfo("(+)/(-)", "2") : Localization.getUpgradeIncCustomExpInfo("F/X", "0.5"));
         evolution.boughtOrRefunded = (_) =>
         {
             theory.invalidatePrimaryEquation();
@@ -328,34 +336,26 @@ var alwaysShowRefundButtons = () =>
     return true;
 }
 
-// Axiom X
-// F --> FF
-// X --> F-[[X]+X]+F[+FX]-X
-
-// Axiom X
-// F --> FXF
-// X --> F-[[X]+X]+F[+FX]-X
-
-// Axiom X
-// E --> XEXF
-// F --> FF[X]+E
-// X --> F-[[X]+X]+F[+FX]-X
-
 var getPrimaryEquation = () =>
 {
     let result = "\\begin{matrix}";
     result += "Axiom\:\\text{X}\\\\";
-    switch(evolution.level)
+    for(let i = 0; i < 3; i++)
     {
-        case 0: result += "\\text{F}\\rightarrow{}\\text{FF}\\\\";
-        break;
-        case 1: result += "\\text{F}\\rightarrow{}\\text{FXF}\\\\";
-        break;
-        case 2: result += "\\text{E}\\rightarrow{}\\text{XEXF, }";
-        result += "\\text{F}\\rightarrow{}\\text{FF[X]+E}\\\\";
-        break
+        if(ruleStrings[evolution.level][i])
+        {
+            result += "\\text{";
+            result += symbols[i];
+            result += "}\\rightarrow{}\\text{";
+            result += ruleStrings[evolution.level][i];
+            if(evolution.level == 2 && i == 0)
+                result += ", }";
+            else if(i < 2)
+                result += "}\\\\";
+            else
+                result += "}";
+        }
     }
-    result += "\\text{X}\\rightarrow{}\\text{F-[[X]+X]+F[+FX]-X}";
     result += "\\end{matrix}";
 
     theory.primaryEquationHeight = 55;
@@ -364,36 +364,16 @@ var getPrimaryEquation = () =>
     return result;
 }
 
-// [0],
-// [0.5],
-// [1],
-// [0],
-// [0]
-//
-// [0],
-// [0.5],
-// [1],
-// [2],
-// [2]
-//
-// [1],
-// [1],
-// [1.5],
-// [2],
-// [2]
-
-// Symbols: EFX+-[] ([] are not calculated!)
-
 var getSecondaryEquation = () =>
 {
     let result = "\\begin{matrix}";
     result += "\\dot{\\rho}=c_1";
-    if(c1Exp.level == 1) result += "^{1.02}";
-    if(c1Exp.level == 2) result += "^{1.04}";
-    if(c1Exp.level == 3) result += "^{1.06}";
-    if(c1Exp.level == 4) result += "^{1.08}";
-    if(c1Exp.level == 5) result += "^{1.10}";
-    if(c1Exp.level == 6) result += "^{1.12}";
+    if(c1Exp.level > 0)
+    {
+        result += "^{";
+        result += getC1Exponent(c1Exp.level);
+        result += "}";
+    }
     result += "c_2\\log_{2}\\text{";
     switch(evolution.level)
     {
@@ -436,29 +416,15 @@ var getTertiaryEquation = () =>
 var getQuaternaryEntries = () =>
 {
     if(quaternaryEntries.length == 0)
-    {
-        quaternaryEntries.push(new QuaternaryEntry("E", null));
-        quaternaryEntries.push(new QuaternaryEntry("F", null));
-        quaternaryEntries.push(new QuaternaryEntry("X", null));
-        quaternaryEntries.push(new QuaternaryEntry("+", null));
-        quaternaryEntries.push(new QuaternaryEntry("-", null));
-    }
+        for(let i = 0; i < 5; i++)
+            quaternaryEntries.push(new QuaternaryEntry(symbols[i], null));
 
-    if(evolution.level > 1)
-        quaternaryEntries[0].value = rho[0][0].toString(0);
-    else
-        quaternaryEntries[0].value = null;
-    quaternaryEntries[1].value = rho[0][1].toString(0);
-    quaternaryEntries[2].value = rho[0][2].toString(0);
-    if(evolution.level > 0)
+    for(let i = 0; i < 5; i++)
     {
-        quaternaryEntries[3].value = rho[0][3].toString(0);
-        quaternaryEntries[4].value = rho[0][4].toString(0);
-    }
-    else
-    {
-        quaternaryEntries[3].value = null;
-        quaternaryEntries[4].value = null;
+        if(evolution.level >= symUnlockLevel[i])
+            quaternaryEntries[i].value = rho[0][i].toString(0);
+        else
+            quaternaryEntries[i].value = null;
     }
 
     return quaternaryEntries;
