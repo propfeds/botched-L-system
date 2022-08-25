@@ -109,13 +109,13 @@ var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q
 
 var rho = bigNumMat([[0, 0, 1, 0, 0]]);
 var rules = [bigNumMat([
-    [0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
     [0, 2, 0, 0, 0],
     [0, 3, 4, 3, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1],
 ]), bigNumMat([
-    [0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0],
     [0, 2, 1, 0, 0],
     [0, 3, 4, 3, 2],
     [0, 0, 0, 1, 0],
