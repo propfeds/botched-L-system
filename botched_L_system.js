@@ -45,7 +45,7 @@ var elemMatPow = (A, B) =>
     A.map((row, i) =>
         B[0].map((_, j) =>
             row.reduce((acc, _, n) =>
-                acc + A[i][n].pow(B[n][j]), BigNumber.ZERO
+                acc + A[i][n].max(BigNumber.ONE).pow(B[n][j]), BigNumber.ZERO
             )
         )
     )
@@ -152,21 +152,21 @@ var rulePowers = [
     [rules[2]]
 ];
 var weight = [bigNumMat([
-    [1],
+    [0],
     [0.5],
     [1],
-    [1],
-    [1]
+    [0],
+    [0]
 ]), bigNumMat([
-    [1],
-    [0.5],
-    [1],
-    [2],
-    [2]
-]), bigNumMat([
-    [1],
+    [0],
     [1],
     [1.5],
+    [1.5],
+    [1.5]
+]), bigNumMat([
+    [1],
+    [1.5],
+    [2],
     [2],
     [2]
 ])];
@@ -248,8 +248,8 @@ var init = () =>
     // Branch weight: gives a flat income multiplication and literally no growth.
     {
         evolution = theory.createMilestoneUpgrade(1, 2);
-        evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "Cyclone" : "XEXF");
-        evolution.getInfo = (amount) => (evolution.level + amount < 2 ? Localization.getUpgradeIncCustomExpInfo("(+)/(-)", "1") : Localization.getUpgradeIncCustomExpInfo("F/X", "0.5"));
+        evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "FXF" : "XEXF");
+        evolution.info = Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
         evolution.boughtOrRefunded = (_) =>
         {
             theory.invalidatePrimaryEquation();
@@ -365,13 +365,30 @@ var getSecondaryEquation = () =>
         result += "}";
     }
     result += "c_2\\log_{2}\\text{";
+//     [0],
+//     [0.5],
+//     [1],
+//     [0],
+//     [0]
+// ]), bigNumMat([
+//     [0],
+//     [1],
+//     [1.5],
+//     [1.5],
+//     [1.5]
+// ]), bigNumMat([
+//     [1],
+//     [1.5],
+//     [2],
+//     [2],
+//     [2]
     switch(evolution.level)
     {
         case 0: result += "({F}^{0.5}+X)";
         break;
-        case 1: result += "({F}^{0.5}+X+{(+)}^{2}+{(-)}^{2})";
+        case 1: result += "(F+{X}^{1.5}+{(+)}^{1.5}+{(-)}^{1.5})";
         break;
-        case 2: result += "(E+F+{X}^{1.5}+{(+)}^{2}+{(-)}^{2})";
+        case 2: result += "(E+{F}^{1.5}+{X}^{2}+{(+)}^{2}+{(-)}^{2})";
         break;
     }
     result += "}\\\\";
