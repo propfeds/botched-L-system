@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.08;
+var version = 0.09;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
