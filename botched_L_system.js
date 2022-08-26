@@ -6,7 +6,7 @@ import { Utils } from "../api/Utils";
 
 var id = "botched_L_system";
 var name = "Botched L-system";
-var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nFurther explanation of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack\n\nNote: This theory will not draw a tree based on these rules due to its sheer size.";
+var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988 (propsuki)";
 var version = 0.08;
 
@@ -181,6 +181,7 @@ var q1, q2, c1, c2;
 var tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
+var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
 
 var init = () =>
@@ -232,11 +233,11 @@ var init = () =>
     // theory.createAutoBuyerUpgrade(2, currency, 1e24);
 
     // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(16, 16));
+    theory.setMilestoneCost(new LinearCost(8, 8));
 
     // Tick limiter: locks tickspeed to a certain value.
-    // The first level will most likely give a growth boost,
-    // but the second level acts more like lag prevention.
+    // The first level will give a growth boost for a short while,
+    // but the second level is better at lag prevention.
     // Lag is the main mechanic of this theory.
     {
         tickLimiter = theory.createMilestoneUpgrade(0, 2);
@@ -266,6 +267,14 @@ var init = () =>
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
     }
 
+    // Achievements (Codex)
+    let library = theory.createAchievementCategory(0, "Library");
+    theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n-, +: turns cursor left/right\n[, ]: allows for branches, by queueing\ncursor positions on a stack", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
+    theory.createAchievement(1, library, "Cultivar FF", "Represents a common carbohydrate source.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
+    theory.createAchievement(2, library, "Cultivar FXF", "Commonly called the Cyclone, cultivar FXF resembles a coil of barbed wire. Legends have it, once a snake moult has weathered enough, a new life is born unto the tattered husk, and from there, it stretches.\nAxiom: X\nF→F[+F]XF\nX→F-[[X]+X]+F[-FX]-X", () => theory.tau > codexPoints[2], () => tauAchievementProgress(codexPoints[2]));
+    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF resembles the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
+
+    // Chapters
     chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
     chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nAnd my colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
     // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
@@ -400,7 +409,7 @@ var getSecondaryEquation = () =>
     }
     result += "}\\\\";
     result += theory.latexSymbol;
-    result += "=\\max\\rho";
+    result += "=\\max{\\rho}^{0.5}";
     result += "\\end{matrix}";
 
     if(evolution.level > 0)
@@ -456,9 +465,10 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.16)/* / BigNumber.TWO*/;
-var getPublicationMultiplierFormula = (symbol) => /*"\\frac{" +*/ "{" + symbol + "}^{0.16}" /*+ "}{2}"*/;
-var getTau = () => currency.value;
+var getPublicationMultiplier = (tau) => tau.pow(0.32)/* / BigNumber.TWO*/;
+var getPublicationMultiplierFormula = (symbol) => /*"\\frac{" +*/ "{" + symbol + "}^{0.32}" /*+ "}{2}"*/;
+var getTau = () => currency.value.pow(BigNumber.from(0.5));
+var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
 var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.value.abs()).log10().toNumber();
 
 var postPublish = () =>
@@ -471,6 +481,7 @@ var postPublish = () =>
     theory.invalidateQuaternaryValues();
 }
 
+var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
 var getQ1 = (level) => (level < 1 ? 0 : BigNumber.from(1.28).pow(level - 1));
 var getQ2 = (level) => BigNumber.FOUR.pow(level);
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
