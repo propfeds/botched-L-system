@@ -249,7 +249,7 @@ var init = () =>
     {
         evolution = theory.createMilestoneUpgrade(1, 2);
         evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "FXF" : "XEXF");
-        evolution.info = Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
+        evolution.getInfo = (amount) => Localization.getUpgradeUnlockInfo((evolution.level + amount < 2 ? "(+)/(-)" : "\\text{E}")) + "; " + Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
         evolution.boughtOrRefunded = (_) =>
         {
             theory.invalidatePrimaryEquation();
@@ -267,9 +267,9 @@ var init = () =>
     }
 
     chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
-    chapter2 = theory.createStoryChapter(1, "Limiter", "My colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
-    chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
-    chapter4 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\nthe catastrophe.", () => tickLimiter.level > 1);
+    chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nAnd my colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
+    chapter3 = theory.createStoryChapter(2, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => tickLimiter.level > 1);
 }
 
 // I copied this from Gilles' T1. Not copyrighted.
