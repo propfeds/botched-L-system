@@ -348,9 +348,16 @@ var getPrimaryEquation = () =>
     }
     result += "\\end{matrix}";
 
-    theory.primaryEquationHeight = 55;
-    theory.primaryEquationScale = 0.95;
-
+    if(evolution.level > 1)
+    {
+        theory.primaryEquationScale = 0.85;
+        theory.primaryEquationHeight = 50;
+    }
+    else
+    {
+        theory.primaryEquationScale = 0.95;
+        theory.primaryEquationHeight = 55;
+    }
     return result;
 }
 
