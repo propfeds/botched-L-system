@@ -416,7 +416,7 @@ var getSecondaryEquation = () =>
         theory.secondaryEquationScale = 0.95;
     else
         theory.secondaryEquationScale = 1;
-    theory.secondaryEquationHeight = 32;
+    theory.secondaryEquationHeight = 34;
     return result;
 }
 
