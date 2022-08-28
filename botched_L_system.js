@@ -469,12 +469,14 @@ var getPublicationMultiplier = (tau) => tau.pow(0.384) / BigNumber.FOUR;
 var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.384}" + "}{4}";
 var getTau = () => currency.value.pow(BigNumber.from(0.5));
 var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
-var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.value.abs()).log10().toNumber();
+var get2DGraphValue = () => (tickLimiter.level > 0 ? ltsBitCount[tickLimiter.level - 1] : bits);
 
 var postPublish = () =>
 {
     time = 0;
     bits = 0;
+    tickPower = 0;
+    origTickPower = 0;
     bitCountMap.clear();
     rho = bigNumMat([[0, 0, 1, 0, 0]]);
     theory.invalidateTertiaryEquation();
