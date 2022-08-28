@@ -435,7 +435,7 @@ var getTertiaryEquation = () =>
         bits = bitCountMap.get(tickPower);
     }
     let result = "\\begin{matrix}";
-    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level < 1 ? 2 : 0)));
+    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level > 0 ? 0 : 2)));
     result += "\\text{, bits: }";
     if(tickLimiter.level > 0)
     {
@@ -484,7 +484,7 @@ var postPublish = () =>
 }
 
 var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
-var getQ1 = (level) => (level < 1 ? 0 : BigNumber.from(1.28).pow(level - 1));
+var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
 var getQ2 = (level) => BigNumber.TWO.pow(level);
 var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
