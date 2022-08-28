@@ -193,7 +193,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
         let getDescNum = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 3)));
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -202,9 +202,9 @@ var init = () =>
     // q2 (Tickspeed)
     // Literally the same as q1, just more expensive
     {
-        let getDesc = (level) => "q_2=4^{" + level + "}";
+        let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
-        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e8, Math.log2(1e8)));
+        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
         q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
@@ -465,8 +465,8 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.32)/* / BigNumber.TWO*/;
-var getPublicationMultiplierFormula = (symbol) => /*"\\frac{" +*/ "{" + symbol + "}^{0.32}" /*+ "}{2}"*/;
+var getPublicationMultiplier = (tau) => tau.pow(0.384) / BigNumber.FOUR;
+var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.384}" + "}{4}";
 var getTau = () => currency.value.pow(BigNumber.from(0.5));
 var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
 var get2DGraphValue = () => currency.value.sign * (BigNumber.ONE + currency.value.abs()).log10().toNumber();
@@ -483,7 +483,7 @@ var postPublish = () =>
 
 var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
 var getQ1 = (level) => (level < 1 ? 0 : BigNumber.from(1.28).pow(level - 1));
-var getQ2 = (level) => BigNumber.FOUR.pow(level);
+var getQ2 = (level) => BigNumber.TWO.pow(level);
 var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
