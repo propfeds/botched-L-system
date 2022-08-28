@@ -4,8 +4,8 @@ import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
-var id = "botched_L_system";
-var name = "Botched L-system";
+var id = "botched_L_system_bigint";
+var name = "Botched L-system ft. BigInt";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988 (propsuki)";
 var version = 0.10;
@@ -82,6 +82,19 @@ var bitCount = (n) =>
     while(exp)
     {
         if(exp & 1)
+            c++;
+        exp >>= 1;
+    }
+    return c;
+}
+
+var bitCountBigInt = (n) =>
+{
+    let exp = n;
+    let c = 0;
+    while(exp)
+    {
+        if(exp % 2n == 1n)
             c++;
         exp >>= 1;
     }
@@ -174,8 +187,8 @@ var limitedTickspeed = bigNumList([1200, 160, 160]);
 var ltsBitCount = [4, 1, 1];
 var time = 0;
 var bits = 0;
-var tickPower = 0;
-var origTickPower = 0;
+var tickPower;
+var origTickPower;
 var currency;
 var q1, q2, c1, c2;
 var tickLimiter, evolution, c1Exp;
@@ -294,9 +307,20 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
-        if(tickLimiter.level > 0)
-            origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
+        if(tickSpeed > BigNumber.TEN)
+        {
+            tickPower = BigInt(Math.round(tickSpeed.toNumber())) / 10n;
+            if(tickLimiter.level > 0)
+                origTickPower = BigInt(Math.round(getTickspeed(0).toNumber())) / 10n;
+            time = 0;
+        }
+        else
+        {
+            tickPower = Math.round(tickSpeed.toNumber() * time);
+            if(tickLimiter.level > 0)
+                origTickPower = Math.round(getTickspeed(0).toNumber() * time);
+            time -= timeLimit;
+        }
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
@@ -306,11 +330,6 @@ var tick = (elapsedTime, multiplier) =>
         growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level])
         rho = matMul(rho, growth);
         currency.value += (elemMatPow(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
-
-        if(tickSpeed > BigNumber.TEN)
-            time = 0;
-        else
-            time -= timeLimit;
 
         theory.invalidateQuaternaryValues();
     }
@@ -425,13 +444,23 @@ var getTertiaryEquation = () =>
     if(tickLimiter.level > 0)
     {
         if(!bitCountMap.has(origTickPower))
-            bitCountMap.set(origTickPower, bitCount(origTickPower));
+        {
+            if(typeof origTickPower === "number")
+                bitCountMap.set(origTickPower, bitCount(origTickPower));
+            else
+                bitCountMap.set(origTickPower, bitCountBigInt(origTickPower));
+        }
         bits = bitCountMap.get(origTickPower);
     }
     else
     {
         if(!bitCountMap.has(tickPower))
-            bitCountMap.set(tickPower, bitCount(tickPower));
+        {
+            if(typeof tickPower === "number")
+                bitCountMap.set(tickPower, bitCount(tickPower));
+            else
+                bitCountMap.set(tickPower, bitCountBigInt(tickPower));
+        }
         bits = bitCountMap.get(tickPower);
     }
     let result = "\\begin{matrix}";
