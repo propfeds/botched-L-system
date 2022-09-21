@@ -233,7 +233,7 @@ var init = () =>
     // theory.createAutoBuyerUpgrade(2, currency, 1e24);
 
     // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(8, 8));
+    theory.setMilestoneCost(new LinearCost(4, 4));
 
     // Tick limiter: locks tickspeed to a certain value.
     // The first level will give a growth boost for a short while,
@@ -465,10 +465,10 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.384) / BigNumber.FOUR;
-var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.384}" + "}{4}";
-var getTau = () => currency.value.pow(BigNumber.from(0.5));
-var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
+var getPublicationMultiplier = (tau) => tau.pow(0.768) / BigNumber.FOUR;
+var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.768}" + "}{4}";
+var getTau = () => currency.value.pow(BigNumber.from(0.25));
+var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.FOUR), currency.symbol];
 var get2DGraphValue = () => (tickLimiter.level > 0 ? ltsBitCount[tickLimiter.level - 1] : bits);
 
 var postPublish = () =>
