@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.10;
+var version = 0.11;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -357,16 +357,8 @@ var getPrimaryEquation = () =>
     }
     result += "\\end{matrix}";
 
-    if(evolution.level > 1)
-    {
-        theory.primaryEquationScale = 0.85;
-        theory.primaryEquationHeight = 50;
-    }
-    else
-    {
-        theory.primaryEquationScale = 0.95;
-        theory.primaryEquationHeight = 55;
-    }
+    theory.primaryEquationScale = 1 - 0.1 * evolution.level;
+    theory.primaryEquationHeight = 55 - 4 * evolution.level;
     return result;
 }
 
@@ -409,13 +401,10 @@ var getSecondaryEquation = () =>
     }
     result += "}\\\\";
     result += theory.latexSymbol;
-    result += "=\\max{\\rho}^{0.5}";
+    result += "=\\max{\\rho}^{0.25}";
     result += "\\end{matrix}";
 
-    if(evolution.level > 0)
-        theory.secondaryEquationScale = 0.95;
-    else
-        theory.secondaryEquationScale = 1;
+    theory.secondaryEquationScale = 1 - 0.05 * evolution.level;
     theory.secondaryEquationHeight = 34;
     return result;
 }
