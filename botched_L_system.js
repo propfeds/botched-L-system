@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988 (propsuki)";
-var version = 0.11;
+var version = 0.12;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -126,6 +126,7 @@ var symbols = ["E", "F", "X", "+", "-"];
 var symUnlockLevel = [2, 0, 0, 1, 1];
 // Axiom X
 var rho = bigNumMat([[0, 0, 1, 0, 0]]);
+// Production rules represented by matrices
 var rules = [bigNumMat([
     [1, 0, 0, 0, 0],
     [0, 2, 0, 0, 0],
@@ -144,6 +145,66 @@ var rules = [bigNumMat([
     [1, 4, 4, 5, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1]
+])];
+// Used for diagonalised matrix powers
+var v = [bigNumMat([
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 1, 0],
+    [-1, -2, 0, -1, 1],
+    [0, 3, 0, 0, 0],
+    [1, 0, 0, 0, 0]
+]), bigNumMat([
+    [0, 0, 1, 0, 0],
+    [1, -1, 0, (-1-Math.sqrt(13))/6, (Math.sqrt(13)-1)/6],
+    [-2, -1, 0, 1, 1],
+    [0, 3, 0, 0, 0],
+    [1, 0, 0, 0, 0]
+]), bigNumMat([
+    [-4, 4, -15, (-1-Math.sqrt(11))/5, (Math.sqrt(11)-1)/5],
+    [-2, -3, -8, (-1-Math.sqrt(11))/5, (Math.sqrt(11)-1)/5],
+    [3, -2, 4, 1, 1],
+    [0, 0, 7, 0, 0],
+    [0, 7, 0, 0, 0]
+])];
+// Used for diagonalised matrix powers
+var diag = [bigNumMat([
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 2, 0],
+    [0, 0, 0, 0, 4]
+]), bigNumMat([
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, (7-Math.sqrt(13))/2, 0],
+    [0, 0, 0, 0, (7+Math.sqrt(13))/2]
+]), bigNumMat([
+    [0, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 3-Math.sqrt(11), 0],
+    [0, 0, 0, 0, 3+Math.sqrt(11)]
+])];
+// Used for diagonalised matrix powers
+var vInv = [bigNumMat([
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 1/3, 0],
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 1, 1, 2/3, 1]
+]), bigNumMat([
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 1/3, 0],
+    [1, 0, 0, 0, 0],
+    [0, -3/Math.sqrt(13), 1/2-1/(2*Math.sqrt(13)), 1/6-7/(6*Math.sqrt(13)), 1+2/Math.sqrt(13)],
+    [0, 3/Math.sqrt(13), (13+Math.sqrt(13))/26, 1/6+7/(6*Math.sqrt(13)), 1-2/Math.sqrt(13)]
+]), bigNumMat([
+    [-1/2, 1/2, 0, -1/2, 1/2],
+    [0, 0, 0, 0, 1/7],
+    [0, 0, 0, 1/7, 0],
+    [3/4+7/(4*Math.sqrt(11)), -3/4-17/(4*Math.sqrt(11)), 1/2-1/(2*Math.sqrt(11)), (143-23*Math.sqrt(11))/308, (-187-83*Math.sqrt(11))/308],
+    [3/4-7/(4*Math.sqrt(11)), 17/(4*Math.sqrt(11))-3/4, (11+Math.sqrt(11))/22, (143+23*Math.sqrt(11))/308, (83*Math.sqrt(11)-187)/308]
 ])];
 // Stores rule^1, ^2, ^4, ^8, etc.
 var rulePowers = [
