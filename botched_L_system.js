@@ -1,13 +1,13 @@
-﻿import { ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
+﻿import { CustomCost, ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
 import { Localization } from "../api/Localization";
 import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
-var id = "botched_L_system";
-var name = "Botched L-system";
+var id = "botched_L_system_diagonal";
+var name = "Botched L-system (Diagonal)";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
-var authors = "propfeds#5988 (propsuki)";
+var authors = "propfeds#5988";
 var version = 0.12;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
@@ -239,11 +239,18 @@ var tickPower = 0;
 var origTickPower = 0;
 var currency;
 var q1, q2, c1, c2;
-var tickLimiter, evolution, c1Exp;
+var algo, tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
 var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
+
+var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
+var getQ2 = (level) => BigNumber.TWO.pow(level);
+var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
+var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
+var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
+var getC2 = (level) => BigNumber.TWO.pow(level);
 
 var init = () =>
 {
@@ -291,15 +298,37 @@ var init = () =>
 
     theory.createPublicationUpgrade(0, currency, 1e8);
     // theory.createBuyAllUpgrade(1, currency, 1e16);
+    {
+        algo = theory.createPermanentUpgrade(1, currency, new CustomCost((level) =>
+        {
+            switch(level)
+            {
+                case 1: return 1e32;
+                case 2: return 1e112;
+            }
+        }));
+        let getName = (level) =>
+        {
+            switch(level)
+            {
+                case 0: return 'linear power algorithm';
+                case 1: return 'binary power algorithm';
+                case 2: return 'diagonalised algorithm';
+            }
+        }
+        algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
+        algo.getInfo = (amount) => Localization.getUpgradeUnlockInfo(getName(algo.level + amount));
+        algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+    }
     theory.createAutoBuyerUpgrade(2, currency, 1e128);
 
     // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(4, 4));
+    theory.setMilestoneCost(new LinearCost(8, 8));
 
     // Tick limiter: locks tickspeed to a certain value.
     // The first level will give a growth boost for a short while,
     // but the second level is better at lag prevention.
-    // Lag is the main mechanic of this theory.
+    // Lag is the stupid mechanic of this theory.
     {
         tickLimiter = theory.createMilestoneUpgrade(0, 2);
         tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", limitedTickspeed[tickLimiter.level].toString(0));
@@ -520,6 +549,7 @@ var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^
 var getTau = () => currency.value.pow(BigNumber.from(0.25));
 var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.FOUR), currency.symbol];
 var get2DGraphValue = () => (tickLimiter.level > 0 ? ltsBitCount[tickLimiter.level - 1] : bits);
+var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
 
 var postPublish = () =>
 {
@@ -533,12 +563,5 @@ var postPublish = () =>
     theory.invalidateQuaternaryValues();
 }
 
-var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
-var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
-var getQ2 = (level) => BigNumber.TWO.pow(level);
-var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
-var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
-var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
-var getC2 = (level) => BigNumber.TWO.pow(level);
 
 init();
