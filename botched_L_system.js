@@ -233,7 +233,7 @@ var weight = [bigNumMat([
     [2],
     [2]
 ])];
-var limitedTickspeed = bigNumList([0, 2400, 5120]);
+var limitedTickspeed = bigNumList([0, 1200, 5120]);
 var ltsBitCount = [0, 4, 1];
 var time = 0;
 var bits = 0;
@@ -319,12 +319,13 @@ var init = () =>
         {
             switch(level)
             {
-                case 1: return 1e16;
-                case 2: return 1e64;
+                case 0: return BigNumber.from(1e16);
+                case 1: return BigNumber.from(1e64);
             }
         }));
-        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("tick limiter") + ` (${limitedTickspeed[tickLimiter.level + amount]}/sec)`;
+        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("\\text{tick limiter}") + ` (${limitedTickspeed[tickLimiter.level + amount]}/sec)`;
         tickLimiter.info = "Locks tickspeed regardless of variable levels";
+        tickLimiter.maxLevel = 2;
         tickLimiter.boughtOrRefunded = (_) => updateAvailability();
     }
     // Algorithms and Data Structures (TM)
@@ -333,21 +334,22 @@ var init = () =>
         {
             switch(level)
             {
-                case 1: return 1e32;
-                case 2: return 1e112;
+                case 0: return BigNumber.from(1e32);
+                case 1: return BigNumber.from(1e112);
             }
         }));
         let getName = (level) =>
         {
             switch(level)
             {
-                case 0: return "linear power algorithm";
-                case 1: return "binary power algorithm";
-                case 2: return "diagonalised algorithm";
+                case 0: return "\\text{linear power algorithm}";
+                case 1: return "\\text{binary power algorithm}";
+                case 2: return "\\text{diagonalised algorithm}";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
         algo.getInfo = (amount) => Localization.getUpgradeUnlockInfo(getName(algo.level + amount));
+        algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     theory.createAutoBuyerUpgrade(3, currency, 1e128);
@@ -445,6 +447,7 @@ var tick = (elapsedTime, multiplier) =>
         else
             time -= timeLimit;
 
+        theory.invalidateTertiaryEquation();
         theory.invalidateQuaternaryValues();
     }
 }
@@ -545,7 +548,7 @@ var getSecondaryEquation = () =>
 var getTertiaryEquation = () =>
 {
     let result = "\\begin{matrix}";
-    result += "Tick power:q_1q_2/10=";
+    result += "\\text{Tick power}:q_1q_2/10=";
     result += tickPower.toString();
     if(algo.level == 1)
     {
@@ -595,7 +598,15 @@ var getPublicationMultiplier = (tau) => tau.pow(0.768) / BigNumber.FOUR;
 var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.768}" + "}{4}";
 var getTau = () => currency.value.pow(BigNumber.from(0.25));
 var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.FOUR), currency.symbol];
-var get2DGraphValue = () => (tickLimiter.level > 0 ? ltsBitCount[tickLimiter.level - 1] : bits);
+var get2DGraphValue = () =>
+{
+    switch(algo.level)
+    {
+        case 0: return tickPower;
+        case 1: return (tl.level == 1 ? ltsBitCount[tickLimiter.level] : bits);
+        case 2: return (BigNumber.ONE + currency.value.abs()).log10().toNumber();
+    }
+};
 var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
 
 var postPublish = () =>
