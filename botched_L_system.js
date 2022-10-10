@@ -405,9 +405,12 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
-        if(tickLimiter.level > 0)
-            origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
+        if(tl.level < 2)
+        {
+            tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
+            if(tickLimiter.level == 1)
+                origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
+        }
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
@@ -522,7 +525,7 @@ var getSecondaryEquation = () =>
 
 var getTertiaryEquation = () =>
 {
-    if(tickLimiter.level > 0)
+    if(tickLimiter.level == 1)
     {
         if(!bitCountMap.has(origTickPower))
             bitCountMap.set(origTickPower, bitCount(origTickPower));
