@@ -231,14 +231,14 @@ var weight = [bigNumMat([
     [2],
     [2]
 ])];
-var limitedTickspeed = bigNumList([1200, 160, 160]);
-var ltsBitCount = [4, 1, 1];
+var limitedTickspeed = bigNumList([0, 2400, 5120]);
+var ltsBitCount = [0, 4, 1];
 var time = 0;
 var bits = 0;
 var tickPower = 0;
 var origTickPower = 0;
 var currency;
-var q1, q2, c1, c2;
+var q1, q2, c1, c2, tl;
 var algo, tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
@@ -264,8 +264,8 @@ var init = () =>
         q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
-        q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
         q1.canBeRefunded = (_) => true;
+        q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // q2 (Tickspeed)
     // Literally the same as q1, just more expensive
@@ -275,8 +275,8 @@ var init = () =>
         q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
-        q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
         q2.canBeRefunded = (_) => true;
+        q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // c1
     {
@@ -295,11 +295,39 @@ var init = () =>
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
         c2.canBeRefunded = (_) => false;
     }
+    // Tick limiter
+    {
+        let getDesc = (level) => "Tick limiter=" + (level == 1 ? limitedTickspeed[tickLimiter.level + amount]/10 : "off");
+        tl = theory.createUpgrade(4, currency, new FreeCost);
+        tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
+        tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
+        tl.maxLevel = 2;
+        tl.canBeRefunded = (_) => true;
+        tl.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+    }
 
     theory.createPublicationUpgrade(0, currency, 1e8);
     // theory.createBuyAllUpgrade(1, currency, 1e16);
+    // Tick limiter: locks tickspeed to a certain value.
+    // The first level will give a growth boost for a short while,
+    // but the second level is better at lag prevention.
+    // Lag is the stupid mechanic of this theory.
     {
-        algo = theory.createPermanentUpgrade(1, currency, new CustomCost((level) =>
+        tickLimiter = theory.createPermanentUpgrade(1, currency, new CustomCost((level) =>
+        {
+            switch(level)
+            {
+                case 1: return 1e16;
+                case 2: return 1e64;
+            }
+        }));
+        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("tick limiter") + `(${limitedTickspeed[tickLimiter.level + amount]/10})`;
+        tickLimiter.info = "Locks tickspeed regardless of variable levels";
+        tickLimiter.boughtOrRefunded = (_) => updateAvailability();
+    }
+    // Algorithms and Data Structures (TM)
+    {
+        algo = theory.createPermanentUpgrade(2, currency, new CustomCost((level) =>
         {
             switch(level)
             {
@@ -311,34 +339,22 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return 'linear power algorithm';
-                case 1: return 'binary power algorithm';
-                case 2: return 'diagonalised algorithm';
+                case 0: return "linear power algorithm";
+                case 1: return "binary power algorithm";
+                case 2: return "diagonalised algorithm";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
         algo.getInfo = (amount) => Localization.getUpgradeUnlockInfo(getName(algo.level + amount));
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
-    theory.createAutoBuyerUpgrade(2, currency, 1e128);
+    theory.createAutoBuyerUpgrade(3, currency, 1e128);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(8, 8));
-
-    // Tick limiter: locks tickspeed to a certain value.
-    // The first level will give a growth boost for a short while,
-    // but the second level is better at lag prevention.
-    // Lag is the stupid mechanic of this theory.
-    {
-        tickLimiter = theory.createMilestoneUpgrade(0, 2);
-        tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", limitedTickspeed[tickLimiter.level].toString(0));
-        tickLimiter.info = "Locks tickspeed regardless of variable levels";
-        tickLimiter.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
-    }
-
     // Branch weight: gives a flat income multiplication and literally no growth.
     {
-        evolution = theory.createMilestoneUpgrade(1, 2);
+        evolution = theory.createMilestoneUpgrade(0, 2);
         evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "FXF" : "XEXF");
         evolution.getInfo = (amount) => Localization.getUpgradeUnlockInfo((evolution.level + amount < 2 ? "(+)/(-)" : "\\text{E}")) + "; " + Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
         evolution.boughtOrRefunded = (_) =>
@@ -351,7 +367,7 @@ var init = () =>
 
     // c1 exponent upgrade.
     {
-        c1Exp = theory.createMilestoneUpgrade(2, 6);
+        c1Exp = theory.createMilestoneUpgrade(1, 6);
         c1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.02");
         c1Exp.info = Localization.getUpgradeIncCustomExpInfo("c_1", "0.02");
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
@@ -365,10 +381,15 @@ var init = () =>
     theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
 
     // Chapters
-    chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
+    chapter1 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
     chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nAnd my colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
     // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
     chapter3 = theory.createStoryChapter(2, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => tickLimiter.level > 1);
+}
+
+var updateAvailability = () =>
+{
+    tl.isAvailable = tickLimiter.level > 0;
 }
 
 // I copied this from Gilles' T1. Not copyrighted.
