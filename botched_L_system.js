@@ -283,7 +283,7 @@ var init = () =>
     {
         let getDesc = (level) => "c_2=2^{" + level + "}";
         let getInfo = (level) => "c_2=" + getC2(level).toString(0);
-        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 4));
+        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 3));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
         c2.canBeRefunded = (_) => false;
@@ -291,7 +291,7 @@ var init = () =>
 
     theory.createPublicationUpgrade(0, currency, 1e8);
     // theory.createBuyAllUpgrade(1, currency, 1e16);
-    // theory.createAutoBuyerUpgrade(2, currency, 1e24);
+    theory.createAutoBuyerUpgrade(2, currency, 1e128);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(4, 4));
