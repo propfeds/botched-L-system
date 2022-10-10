@@ -50,6 +50,8 @@ var elemMatPow = (A, B) =>
         )
     )
 
+var diagMatPow = (A, n) => A.map((row) => row.map(x => x.pow(n)));
+
 var matPow = (A, n, cache) =>
 {
     // log(n);
@@ -101,7 +103,7 @@ var printMat = (A) =>
 }
 
 
-var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
+// var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
 var ruleStrings = [[
     null,
     "FF",
@@ -247,7 +249,7 @@ var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
 var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
 var getQ2 = (level) => BigNumber.TWO.pow(level);
-var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
+var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level] : getQ1(q1.level) * getQ2(q2.level));
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
 var getC2 = (level) => BigNumber.TWO.pow(level);
@@ -297,7 +299,7 @@ var init = () =>
     }
     // Tick limiter
     {
-        let getDesc = (level) => "Tick limiter=" + (level == 1 ? limitedTickspeed[tickLimiter.level + amount]/10 : "off");
+        let getDesc = (level) => "Tick limiter=" + (level == 1 ? limitedTickspeed[tickLimiter.level + amount] + "/sec" : "off");
         tl = theory.createUpgrade(4, currency, new FreeCost);
         tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
         tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
@@ -321,7 +323,7 @@ var init = () =>
                 case 2: return 1e64;
             }
         }));
-        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("tick limiter") + `(${limitedTickspeed[tickLimiter.level + amount]/10})`;
+        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("tick limiter") + ` (${limitedTickspeed[tickLimiter.level + amount]}/sec)`;
         tickLimiter.info = "Locks tickspeed regardless of variable levels";
         tickLimiter.boughtOrRefunded = (_) => updateAvailability();
     }
@@ -382,7 +384,7 @@ var init = () =>
 
     // Chapters
     chapter1 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
-    chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nAnd my colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
     // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
     chapter3 = theory.createStoryChapter(2, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => tickLimiter.level > 1);
 }
@@ -405,20 +407,37 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        if(tl.level < 2)
+        if(algo.level < 2)
         {
             tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
-            if(tickLimiter.level == 1)
+            if(tl.level == 1)
                 origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
         }
+        else
+            tickPower = tickSpeed * BigNumber.from(time);
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
 
-        growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level])
-        rho = matMul(rho, growth);
+        let growth;
+        if(algo.level == 0)
+        {
+            for(let i = 0; i < tickPower; ++i)
+                rho = matMul(rho, rules[evolution.level]);
+        }
+        else if(algo.level == 1)
+        {
+            growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level]);
+            rho = matMul(rho, growth);
+        }
+        else
+        {
+            growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
+            rho = matMul(rho, growth);
+        }
+        
         currency.value += (elemMatPow(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
 
         if(tickSpeed > BigNumber.TEN)
@@ -525,27 +544,31 @@ var getSecondaryEquation = () =>
 
 var getTertiaryEquation = () =>
 {
-    if(tickLimiter.level == 1)
-    {
-        if(!bitCountMap.has(origTickPower))
-            bitCountMap.set(origTickPower, bitCount(origTickPower));
-        bits = bitCountMap.get(origTickPower);
-    }
-    else
-    {
-        if(!bitCountMap.has(tickPower))
-            bitCountMap.set(tickPower, bitCount(tickPower));
-        bits = bitCountMap.get(tickPower);
-    }
     let result = "\\begin{matrix}";
-    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level > 0 ? 0 : 2)));
-    result += "\\text{, bits: }";
-    if(tickLimiter.level > 0)
+    result += "Tick power:q_1q_2/10=";
+    result += tickPower.toString();
+    if(algo.level == 1)
     {
-        result += ltsBitCount[tickLimiter.level - 1].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
+        if(tl.level == 1)
+        {
+            if(!bitCountMap.has(origTickPower))
+                bitCountMap.set(origTickPower, bitCount(origTickPower));
+            bits = bitCountMap.get(origTickPower);
+        }
+        else
+        {
+            if(!bitCountMap.has(tickPower))
+                bitCountMap.set(tickPower, bitCount(tickPower));
+            bits = bitCountMap.get(tickPower);
+        }
+        result += "\\text{,&bits: }";
+        if(tl.level == 1)
+        {
+            result += ltsBitCount[tickLimiter.level].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
+        }
+        else
+            result += bits.toString();
     }
-    else
-        result += bits.toString();
     result += "\\end{matrix}";
 
     return result;
