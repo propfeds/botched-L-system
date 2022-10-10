@@ -233,7 +233,7 @@ var weight = [bigNumMat([
     [2],
     [2]
 ])];
-var limitedTickspeed = bigNumList([0, 1200, 5120]);
+var limitedTickspeed = bigNumList([0, 1200, 5120, 5120]);
 var ltsBitCount = [0, 4, 1];
 var time = 0;
 var bits = 0;
@@ -249,7 +249,7 @@ var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
 var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
 var getQ2 = (level) => BigNumber.TWO.pow(level);
-var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level] : getQ1(q1.level) * getQ2(q2.level));
+var getTickspeed = (level) => (level == 1 ? limitedTickspeed[tickLimiter.level] : getQ1(q1.level) * getQ2(q2.level));
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
 var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
 var getC2 = (level) => BigNumber.TWO.pow(level);
@@ -299,7 +299,8 @@ var init = () =>
     }
     // Tick limiter
     {
-        let getDesc = (level) => "Tick limiter=" + (level == 1 ? limitedTickspeed[tickLimiter.level + amount] + "/sec" : "off");
+        let getDesc = (level) => "\\text{Tick limiter}=" + (level == 1 ? limitedTickspeed[level] + "/sec" : "\\text{off}");
+        let getInfo = (level) => getDesc(level);
         tl = theory.createUpgrade(4, currency, new FreeCost);
         tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
         tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
@@ -309,7 +310,6 @@ var init = () =>
     }
 
     theory.createPublicationUpgrade(0, currency, 1e8);
-    // theory.createBuyAllUpgrade(1, currency, 1e16);
     // Tick limiter: locks tickspeed to a certain value.
     // The first level will give a growth boost for a short while,
     // but the second level is better at lag prevention.
@@ -345,6 +345,7 @@ var init = () =>
                 case 0: return "\\text{linear power algorithm}";
                 case 1: return "\\text{binary power algorithm}";
                 case 2: return "\\text{diagonalised algorithm}";
+                default: return "\\text{diagonalised algorithm}";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
@@ -352,7 +353,8 @@ var init = () =>
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
-    theory.createAutoBuyerUpgrade(3, currency, 1e128);
+    theory.createBuyAllUpgrade(3, currency, 1e128);
+    theory.createAutoBuyerUpgrade(4, currency, 1e160);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(8, 8));
@@ -385,10 +387,11 @@ var init = () =>
     theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
 
     // Chapters
-    chapter1 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
-    chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
-    // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
-    chapter3 = theory.createStoryChapter(2, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => tickLimiter.level > 1);
+    chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
+    chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    chapter2 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
+    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
+    chapter4 = theory.createStoryChapter(4, "Catharsis", "Finally.\nA good enough scientist who actually knows what they're doing.\nNo more famine, no more internal struggle.\nTo infinity and botch on!", () => algo.level > 1);
 }
 
 var updateAvailability = () =>
@@ -399,7 +402,7 @@ var updateAvailability = () =>
 // I copied this from Gilles' T1. Not copyrighted.
 var tick = (elapsedTime, multiplier) =>
 {
-    let tickSpeed = getTickspeed(tickLimiter.level);
+    let tickSpeed = getTickspeed(tl.level);
 
     if(tickSpeed.isZero)
         return;
@@ -564,7 +567,7 @@ var getTertiaryEquation = () =>
                 bitCountMap.set(tickPower, bitCount(tickPower));
             bits = bitCountMap.get(tickPower);
         }
-        result += "\\text{,&bits: }";
+        result += ",&\\text{bits}:";
         if(tl.level == 1)
         {
             result += ltsBitCount[tickLimiter.level].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
