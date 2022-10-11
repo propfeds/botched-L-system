@@ -262,10 +262,10 @@ var init = () =>
     // Starts with 0, then goes to 1 and beyond?
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
-        let getDescNum = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
+        let getInfo = (level) => "q_1=" + getQ1(level).toString();
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 5)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
-        q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
+        q1.getInfo = (amount) => Utils.getMathTo(getInfo(q1.level), getInfo(q1.level + amount));
         q1.canBeRefunded = (_) => true;
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
@@ -274,7 +274,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
-        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
+        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e8)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
         q2.canBeRefunded = (_) => true;
@@ -292,7 +292,7 @@ var init = () =>
     {
         let getDesc = (level) => "c_2=2^{" + level + "}";
         let getInfo = (level) => "c_2=" + getC2(level).toString(0);
-        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 3));
+        c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 4));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
         c2.canBeRefunded = (_) => false;
@@ -335,7 +335,7 @@ var init = () =>
             switch(level)
             {
                 case 0: return BigNumber.from(1e32);
-                case 1: return BigNumber.from(1e112);
+                case 1: return BigNumber.from(1e128);
             }
         }));
         let getName = (level) =>
@@ -353,8 +353,8 @@ var init = () =>
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
-    theory.createBuyAllUpgrade(3, currency, 1e128);
-    theory.createAutoBuyerUpgrade(4, currency, 1e160);
+    theory.createBuyAllUpgrade(3, currency, 1e160);
+    theory.createAutoBuyerUpgrade(4, currency, 1e192);
 
     // First unlock is at the same stage as auto-buyer
     theory.setMilestoneCost(new LinearCost(8, 8));
@@ -439,6 +439,11 @@ var tick = (elapsedTime, multiplier) =>
         }
         else
         {
+            log("diag");
+            printMat(diag[evolution.level]);
+            log(tickPower);
+            log("diag^n");
+            printMat(diagMatPow(diag[evolution.level], tickPower));
             growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
             rho = matMul(rho, growth);
         }
