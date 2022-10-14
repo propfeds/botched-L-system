@@ -1,4 +1,4 @@
-﻿import { ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
+﻿import { CustomCost, ExponentialCost, FirstFreeCost, LinearCost } from "../api/Costs";
 import { Localization } from "../api/Localization";
 import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
@@ -7,8 +7,8 @@ import { Utils } from "../api/Utils";
 var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
-var authors = "propfeds#5988 (propsuki)";
-var version = 0.11;
+var authors = "propfeds#5988";
+var version = 0.13;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -49,6 +49,8 @@ var elemMatPow = (A, B) =>
             )
         )
     )
+
+var diagMatPow = (A, n) => A.map((row) => row.map(x => x.pow(n)));
 
 var matPow = (A, n, cache) =>
 {
@@ -101,7 +103,7 @@ var printMat = (A) =>
 }
 
 
-var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
+// var stringTickspeed = "\\text{{" + Localization.get("TheoryPanelTickspeed", "}}q_1q_2\\text{{", "}}{0}\\text{{") + "}}";
 var ruleStrings = [[
     null,
     "FF",
@@ -117,7 +119,7 @@ var ruleStrings = [[
 ], [
     "XEXF-",
     "FX+[E]X",
-    "F-[X+[X[++E]F]]+F[+FX]-X",
+    "F-[X+[X[++E]F]]+F[X+FX]-X",
     null,
     null
 ]];
@@ -126,6 +128,7 @@ var symbols = ["E", "F", "X", "+", "-"];
 var symUnlockLevel = [2, 0, 0, 1, 1];
 // Axiom X
 var rho = bigNumMat([[0, 0, 1, 0, 0]]);
+// Production rules represented by matrices
 var rules = [bigNumMat([
     [1, 0, 0, 0, 0],
     [0, 2, 0, 0, 0],
@@ -141,9 +144,69 @@ var rules = [bigNumMat([
 ]), bigNumMat([
     [1, 1, 2, 0, 1],
     [1, 1, 2, 1, 0],
-    [1, 4, 4, 5, 2],
+    [1, 4, 5, 5, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1]
+])];
+// Used for diagonalised matrix powers
+var v = [bigNumMat([
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 1, 0],
+    [-1, -2, 0, -1, 1],
+    [0, 3, 0, 0, 0],
+    [1, 0, 0, 0, 0]
+]), bigNumMat([
+    [0, 0, 1, 0, 0],
+    [1, -1, 0, (-1-Math.sqrt(13))/6, (Math.sqrt(13)-1)/6],
+    [-2, -1, 0, 1, 1],
+    [0, 3, 0, 0, 0],
+    [1, 0, 0, 0, 0]
+]), bigNumMat([
+    [-1, -5/3, 2, -7, 2],
+    [-1, 2/3, -1, -4, 2],
+    [1, 0, -1, 2, 5],
+    [0, 0, 0, 3, 0],
+    [0, 0, 3, 0, 0]
+])];
+// Used for diagonalised matrix powers
+var diag = [bigNumMat([
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 2, 0],
+    [0, 0, 0, 0, 4]
+]), bigNumMat([
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, (7-Math.sqrt(13))/2, 0],
+    [0, 0, 0, 0, (7+Math.sqrt(13))/2]
+]), bigNumMat([
+    [0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 7]
+])];
+// Used for diagonalised matrix powers
+var vInv = [bigNumMat([
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 1/3, 0],
+    [1, 0, 0, 0, 0],
+    [0, 1, 0, 0, 0],
+    [0, 1, 1, 2/3, 1]
+]), bigNumMat([
+    [0, 0, 0, 0, 1],
+    [0, 0, 0, 1/3, 0],
+    [1, 0, 0, 0, 0],
+    [0, -3/Math.sqrt(13), 1/2-1/(2*Math.sqrt(13)), 1/6-7/(6*Math.sqrt(13)), 1+2/Math.sqrt(13)],
+    [0, 3/Math.sqrt(13), (13+Math.sqrt(13))/26, 1/6+7/(6*Math.sqrt(13)), 1-2/Math.sqrt(13)]
+]), bigNumMat([
+    [-10/49, -25/49, 2/7, -66/49, 3/49],
+    [-3/7, 3/7, 0, -3/7, 3/7],
+    [0, 0, 0, 0, 1/3],
+    [0, 0, 0, 1/3, 0],
+    [2/49, 5/49, 1/7, 20/147, 8/147]
 ])];
 // Stores rule^1, ^2, ^4, ^8, etc.
 var rulePowers = [
@@ -170,19 +233,26 @@ var weight = [bigNumMat([
     [2],
     [2]
 ])];
-var limitedTickspeed = bigNumList([1200, 160, 160]);
-var ltsBitCount = [4, 1, 1];
+var limitedTickspeed = bigNumList([0, 1200, 5120, 5120]);
+var ltsBitCount = [0, 4, 1];
 var time = 0;
 var bits = 0;
 var tickPower = 0;
 var origTickPower = 0;
 var currency;
-var q1, q2, c1, c2;
-var tickLimiter, evolution, c1Exp;
+var q1, q2, c1, c2, tl;
+var algo, tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
 var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
+
+var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
+var getQ2 = (level) => BigNumber.TWO.pow(level);
+var getTickspeed = (level) => (level == 1 ? limitedTickspeed[tickLimiter.level] : getQ1(q1.level) * getQ2(q2.level));
+var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
+var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
+var getC2 = (level) => BigNumber.TWO.pow(level);
 
 var init = () =>
 {
@@ -192,12 +262,12 @@ var init = () =>
     // Starts with 0, then goes to 1 and beyond?
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
-        let getDescNum = (level) => "q_1=" + getQ1(level).toString();
+        let getInfo = (level) => "q_1=" + getQ1(level).toString();
         q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
-        q1.getInfo = (amount) => Utils.getMathTo(getDescNum(q1.level), getDescNum(q1.level + amount));
-        q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+        q1.getInfo = (amount) => Utils.getMathTo(getInfo(q1.level), getInfo(q1.level + amount));
         q1.canBeRefunded = (_) => true;
+        q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // q2 (Tickspeed)
     // Literally the same as q1, just more expensive
@@ -207,8 +277,8 @@ var init = () =>
         q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
-        q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
         q2.canBeRefunded = (_) => true;
+        q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // c1
     {
@@ -227,28 +297,70 @@ var init = () =>
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
         c2.canBeRefunded = (_) => false;
     }
+    // Tick limiter
+    {
+        let getDesc = (level) => "\\text{Tick limiter}=" + (level == 1 ? limitedTickspeed[level] + "/sec" : "\\text{off}");
+        let getInfo = (level) => getDesc(level);
+        tl = theory.createUpgrade(4, currency, new FreeCost);
+        tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
+        tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
+        tl.maxLevel = 2;
+        tl.canBeRefunded = (_) => true;
+        tl.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+    }
 
     theory.createPublicationUpgrade(0, currency, 1e8);
-    // theory.createBuyAllUpgrade(1, currency, 1e16);
-    // theory.createAutoBuyerUpgrade(2, currency, 1e24);
-
-    // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(4, 4));
-
     // Tick limiter: locks tickspeed to a certain value.
     // The first level will give a growth boost for a short while,
     // but the second level is better at lag prevention.
-    // Lag is the main mechanic of this theory.
+    // Lag is the stupid mechanic of this theory.
     {
-        tickLimiter = theory.createMilestoneUpgrade(0, 2);
-        tickLimiter.getDescription = (_) => Localization.format("Limits tickspeed to {0}", limitedTickspeed[tickLimiter.level].toString(0));
+        tickLimiter = theory.createPermanentUpgrade(1, currency, new CustomCost((level) =>
+        {
+            switch(level)
+            {
+                case 0: return BigNumber.from(1e16);
+                case 1: return BigNumber.from(1e64);
+            }
+        }));
+        tickLimiter.getDescription = (amount) => Localization.getUpgradeUnlockDesc("\\text{tick limiter}") + ` (${limitedTickspeed[tickLimiter.level + amount]}/sec)`;
         tickLimiter.info = "Locks tickspeed regardless of variable levels";
-        tickLimiter.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+        tickLimiter.maxLevel = 2;
+        tickLimiter.boughtOrRefunded = (_) => updateAvailability();
     }
+    // Algorithms and Data Structures (TM)
+    {
+        algo = theory.createPermanentUpgrade(2, currency, new CustomCost((level) =>
+        {
+            switch(level)
+            {
+                case 0: return BigNumber.from(1e32);
+                case 1: return BigNumber.from(1e112);
+            }
+        }));
+        let getName = (level) =>
+        {
+            switch(level)
+            {
+                case 0: return "\\text{linear power algorithm}";
+                case 1: return "\\text{binary power algorithm}";
+                case 2: return "\\text{diagonalised algorithm}";
+                default: return "\\text{diagonalised algorithm}";
+            }
+        }
+        algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
+        algo.getInfo = (amount) => Localization.getUpgradeUnlockInfo(getName(algo.level + amount));
+        algo.maxLevel = 2;
+        algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+    }
+    theory.createBuyAllUpgrade(3, currency, 1e128);
+    theory.createAutoBuyerUpgrade(4, currency, 1e160);
 
+    // First unlock is at the same stage as auto-buyer
+    theory.setMilestoneCost(new LinearCost(16, 16));
     // Branch weight: gives a flat income multiplication and literally no growth.
     {
-        evolution = theory.createMilestoneUpgrade(1, 2);
+        evolution = theory.createMilestoneUpgrade(0, 2);
         evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "FXF" : "XEXF");
         evolution.getInfo = (amount) => Localization.getUpgradeUnlockInfo((evolution.level + amount < 2 ? "(+)/(-)" : "\\text{E}")) + "; " + Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
         evolution.boughtOrRefunded = (_) =>
@@ -261,7 +373,7 @@ var init = () =>
 
     // c1 exponent upgrade.
     {
-        c1Exp = theory.createMilestoneUpgrade(2, 6);
+        c1Exp = theory.createMilestoneUpgrade(1, 6);
         c1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.02");
         c1Exp.info = Localization.getUpgradeIncCustomExpInfo("c_1", "0.02");
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
@@ -272,19 +384,25 @@ var init = () =>
     theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n+, -: turns cursor by an angle\n(left/right differs between implementations)\n[, ]: allows for branches, by queueing\ncursor positions on a stack", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
     theory.createAchievement(1, library, "Cultivar FF", "Represents a common source of carbohydrates.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
     theory.createAchievement(2, library, "Cultivar FXF", "Commonly called the Cyclone, cultivar FXF resembles a coil of barbed wire. Legends have it, once a snake moult has weathered enough, a new life is born unto the tattered husk, and from there, it stretches.\nAxiom: X\nF→F[+F]XF\nX→F-[[X]+X]+F[-FX]-X", () => theory.tau > codexPoints[2], () => tauAchievementProgress(codexPoints[2]));
-    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
+    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[X+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
 
     // Chapters
-    chapter1 = theory.createStoryChapter(0, "The L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
-    chapter2 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nAnd my colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
-    // chapter3 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
-    chapter3 = theory.createStoryChapter(2, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => tickLimiter.level > 1);
+    chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
+    chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    chapter2 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
+    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
+    chapter4 = theory.createStoryChapter(4, "Catharsis", "Finally.\nA good enough scientist who actually knows what they're doing.\nNo more famine, no more internal struggle.\nTo infinity and botch on!", () => algo.level > 1);
+}
+
+var updateAvailability = () =>
+{
+    tl.isAvailable = tickLimiter.level > 0;
 }
 
 // I copied this from Gilles' T1. Not copyrighted.
 var tick = (elapsedTime, multiplier) =>
 {
-    let tickSpeed = getTickspeed(tickLimiter.level);
+    let tickSpeed = getTickspeed(tl.level);
 
     if(tickSpeed.isZero)
         return;
@@ -294,17 +412,42 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
-        if(tickLimiter.level > 0)
-            origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
+        if(algo.level < 2)
+        {
+            tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
+            if(tl.level == 1)
+                origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
+        }
+        else
+            tickPower = tickSpeed * BigNumber.from(time);
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
         let vc1 = getC1(c1.level).pow(getC1Exponent(c1Exp.level));
         let vc2 = getC2(c2.level);
 
-        growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level])
-        rho = matMul(rho, growth);
+        let growth;
+        if(algo.level == 0)
+        {
+            for(let i = 0; i < tickPower; ++i)
+                rho = matMul(rho, rules[evolution.level]);
+        }
+        else if(algo.level == 1)
+        {
+            growth = matPow(rules[evolution.level], tickPower, rulePowers[evolution.level]);
+            rho = matMul(rho, growth);
+        }
+        else
+        {
+            // log("diag");
+            // printMat(diag[evolution.level]);
+            // log(tickPower);
+            // log("diag^n");
+            // printMat(diagMatPow(diag[evolution.level], tickPower));
+            growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
+            rho = matMul(rho, growth);
+        }
+        
         currency.value += (elemMatPow(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
 
         if(tickSpeed > BigNumber.TEN)
@@ -312,6 +455,7 @@ var tick = (elapsedTime, multiplier) =>
         else
             time -= timeLimit;
 
+        theory.invalidateTertiaryEquation();
         theory.invalidateQuaternaryValues();
     }
 }
@@ -357,8 +501,10 @@ var getPrimaryEquation = () =>
     }
     result += "\\end{matrix}";
 
-    theory.primaryEquationScale = 1 - 0.1 * evolution.level;
-    theory.primaryEquationHeight = 55 - 4 * evolution.level;
+    let primaryScale = [0.95, 0.9, 0.75];
+    let primaryHeight = [55, 50, 40];
+    theory.primaryEquationScale = primaryScale[evolution.level];
+    theory.primaryEquationHeight = primaryHeight[evolution.level];
     return result;
 }
 
@@ -401,7 +547,7 @@ var getSecondaryEquation = () =>
     }
     result += "}\\\\";
     result += theory.latexSymbol;
-    result += "=\\max{\\rho}^{0.25}";
+    result += "=\\max{\\rho}^{0.5}";
     result += "\\end{matrix}";
 
     theory.secondaryEquationScale = 1 - 0.05 * evolution.level;
@@ -411,27 +557,31 @@ var getSecondaryEquation = () =>
 
 var getTertiaryEquation = () =>
 {
-    if(tickLimiter.level > 0)
-    {
-        if(!bitCountMap.has(origTickPower))
-            bitCountMap.set(origTickPower, bitCount(origTickPower));
-        bits = bitCountMap.get(origTickPower);
-    }
-    else
-    {
-        if(!bitCountMap.has(tickPower))
-            bitCountMap.set(tickPower, bitCount(tickPower));
-        bits = bitCountMap.get(tickPower);
-    }
     let result = "\\begin{matrix}";
-    result += Localization.format(stringTickspeed, getTickspeed(tickLimiter.level).toString((tickLimiter.level > 0 ? 0 : 2)));
-    result += "\\text{, bits: }";
-    if(tickLimiter.level > 0)
+    result += "\\text{Tick power}:q_1q_2/10=";
+    result += tickPower.toString();
+    if(algo.level == 1)
     {
-        result += ltsBitCount[tickLimiter.level - 1].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
+        if(tl.level == 1)
+        {
+            if(!bitCountMap.has(origTickPower))
+                bitCountMap.set(origTickPower, bitCount(origTickPower));
+            bits = bitCountMap.get(origTickPower);
+        }
+        else
+        {
+            if(!bitCountMap.has(tickPower))
+                bitCountMap.set(tickPower, bitCount(tickPower));
+            bits = bitCountMap.get(tickPower);
+        }
+        result += ",&\\text{bits}:";
+        if(tl.level == 1)
+        {
+            result += ltsBitCount[tickLimiter.level].toString() + "\\text{ (}" + bits.toString() + "\\text{)}";
+        }
+        else
+            result += bits.toString();
     }
-    else
-        result += bits.toString();
     result += "\\end{matrix}";
 
     return result;
@@ -454,11 +604,20 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.768) / BigNumber.FOUR;
-var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.768}" + "}{4}";
-var getTau = () => currency.value.pow(BigNumber.from(0.25));
-var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.FOUR), currency.symbol];
-var get2DGraphValue = () => (tickLimiter.level > 0 ? ltsBitCount[tickLimiter.level - 1] : bits);
+var getPublicationMultiplier = (tau) => tau.pow(0.384) / BigNumber.TWO;
+var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.384}" + "}{2}";
+var getTau = () => currency.value.pow(BigNumber.from(0.5));
+var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
+var get2DGraphValue = () =>
+{
+    switch(algo.level)
+    {
+        case 0: return tickPower;
+        case 1: return (tl.level == 1 ? ltsBitCount[tickLimiter.level] : bits);
+        case 2: return (BigNumber.ONE + currency.value.abs()).log10().toNumber();
+    }
+};
+var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
 
 var postPublish = () =>
 {
@@ -472,12 +631,5 @@ var postPublish = () =>
     theory.invalidateQuaternaryValues();
 }
 
-var tauAchievementProgress = (goal) => (theory.tau.max(BigNumber.ONE).log2() / goal.log2()).toNumber();
-var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
-var getQ2 = (level) => BigNumber.TWO.pow(level);
-var getTickspeed = (level) => (level > 0 ? limitedTickspeed[level - 1] : getQ1(q1.level) * getQ2(q2.level));
-var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
-var getC1Exponent = (level) => BigNumber.from(1 + 0.02 * level);
-var getC2 = (level) => BigNumber.TWO.pow(level);
 
 init();
