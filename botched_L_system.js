@@ -373,7 +373,7 @@ var init = () =>
 
     // c1 exponent upgrade.
     {
-        c1Exp = theory.createMilestoneUpgrade(1, 6);
+        c1Exp = theory.createMilestoneUpgrade(1, 4);
         c1Exp.description = Localization.getUpgradeIncCustomExpDesc("c_1", "0.02");
         c1Exp.info = Localization.getUpgradeIncCustomExpInfo("c_1", "0.02");
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
@@ -551,7 +551,7 @@ var getSecondaryEquation = () =>
     result += "\\end{matrix}";
 
     theory.secondaryEquationScale = 1 - 0.05 * evolution.level;
-    theory.secondaryEquationHeight = 34;
+    theory.secondaryEquationHeight = 35;
     return result;
 }
 
