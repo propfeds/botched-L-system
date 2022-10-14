@@ -8,7 +8,7 @@ var id = "botched_L_system_diagonal";
 var name = "Botched L-system (Diagonal)";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988";
-var version = 0.12;
+var version = 0.13;
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -119,7 +119,7 @@ var ruleStrings = [[
 ], [
     "XEXF-",
     "FX+[E]X",
-    "F-[X+[X[++E]F]]+F[+FX]-X",
+    "F-[X+[X[++E]F]]+F[X+FX]-X",
     null,
     null
 ]];
@@ -144,7 +144,7 @@ var rules = [bigNumMat([
 ]), bigNumMat([
     [1, 1, 2, 0, 1],
     [1, 1, 2, 1, 0],
-    [1, 4, 4, 5, 2],
+    [1, 4, 5, 5, 2],
     [0, 0, 0, 1, 0],
     [0, 0, 0, 0, 1]
 ])];
@@ -162,11 +162,11 @@ var v = [bigNumMat([
     [0, 3, 0, 0, 0],
     [1, 0, 0, 0, 0]
 ]), bigNumMat([
-    [-4, 4, -15, (-1-Math.sqrt(11))/5, (Math.sqrt(11)-1)/5],
-    [-2, -3, -8, (-1-Math.sqrt(11))/5, (Math.sqrt(11)-1)/5],
-    [3, -2, 4, 1, 1],
-    [0, 0, 7, 0, 0],
-    [0, 7, 0, 0, 0]
+    [-1, -5/3, 2, -7, 2],
+    [-1, 2/3, -1, -4, 2],
+    [1, 0, -1, 2, 5],
+    [0, 0, 0, 3, 0],
+    [0, 0, 3, 0, 0]
 ])];
 // Used for diagonalised matrix powers
 var diag = [bigNumMat([
@@ -182,11 +182,11 @@ var diag = [bigNumMat([
     [0, 0, 0, (7-Math.sqrt(13))/2, 0],
     [0, 0, 0, 0, (7+Math.sqrt(13))/2]
 ]), bigNumMat([
-    [0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0],
-    [0, 0, 0, 3-Math.sqrt(11), 0],
-    [0, 0, 0, 0, 3+Math.sqrt(11)]
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 7]
 ])];
 // Used for diagonalised matrix powers
 var vInv = [bigNumMat([
@@ -202,11 +202,11 @@ var vInv = [bigNumMat([
     [0, -3/Math.sqrt(13), 1/2-1/(2*Math.sqrt(13)), 1/6-7/(6*Math.sqrt(13)), 1+2/Math.sqrt(13)],
     [0, 3/Math.sqrt(13), (13+Math.sqrt(13))/26, 1/6+7/(6*Math.sqrt(13)), 1-2/Math.sqrt(13)]
 ]), bigNumMat([
-    [-1/2, 1/2, 0, -1/2, 1/2],
-    [0, 0, 0, 0, 1/7],
-    [0, 0, 0, 1/7, 0],
-    [3/4+7/(4*Math.sqrt(11)), -3/4-17/(4*Math.sqrt(11)), 1/2-1/(2*Math.sqrt(11)), (143-23*Math.sqrt(11))/308, (-187-83*Math.sqrt(11))/308],
-    [3/4-7/(4*Math.sqrt(11)), 17/(4*Math.sqrt(11))-3/4, (11+Math.sqrt(11))/22, (143+23*Math.sqrt(11))/308, (83*Math.sqrt(11)-187)/308]
+    [-10/49, -25/49, 2/7, -66/49, 3/49],
+    [-3/7, 3/7, 0, -3/7, 3/7],
+    [0, 0, 0, 0, 1/3],
+    [0, 0, 0, 1/3, 0],
+    [2/49, 5/49, 1/7, 20/147, 8/147]
 ])];
 // Stores rule^1, ^2, ^4, ^8, etc.
 var rulePowers = [
@@ -274,7 +274,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_2=2^{" + level + "}";
         let getInfo = (level) => "q_2=" + getQ2(level).toString(0);
-        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e8)));
+        q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
         q2.canBeRefunded = (_) => true;
@@ -335,7 +335,7 @@ var init = () =>
             switch(level)
             {
                 case 0: return BigNumber.from(1e32);
-                case 1: return BigNumber.from(1e128);
+                case 1: return BigNumber.from(1e112);
             }
         }));
         let getName = (level) =>
@@ -353,11 +353,11 @@ var init = () =>
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
-    theory.createBuyAllUpgrade(3, currency, 1e160);
-    theory.createAutoBuyerUpgrade(4, currency, 1e192);
+    theory.createBuyAllUpgrade(3, currency, 1e128);
+    theory.createAutoBuyerUpgrade(4, currency, 1e160);
 
     // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(8, 8));
+    theory.setMilestoneCost(new LinearCost(16, 16));
     // Branch weight: gives a flat income multiplication and literally no growth.
     {
         evolution = theory.createMilestoneUpgrade(0, 2);
@@ -384,7 +384,7 @@ var init = () =>
     theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n+, -: turns cursor by an angle\n(left/right differs between implementations)\n[, ]: allows for branches, by queueing\ncursor positions on a stack", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
     theory.createAchievement(1, library, "Cultivar FF", "Represents a common source of carbohydrates.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
     theory.createAchievement(2, library, "Cultivar FXF", "Commonly called the Cyclone, cultivar FXF resembles a coil of barbed wire. Legends have it, once a snake moult has weathered enough, a new life is born unto the tattered husk, and from there, it stretches.\nAxiom: X\nF→F[+F]XF\nX→F-[[X]+X]+F[-FX]-X", () => theory.tau > codexPoints[2], () => tauAchievementProgress(codexPoints[2]));
-    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
+    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[X+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
 
     // Chapters
     chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
@@ -439,11 +439,11 @@ var tick = (elapsedTime, multiplier) =>
         }
         else
         {
-            log("diag");
-            printMat(diag[evolution.level]);
-            log(tickPower);
-            log("diag^n");
-            printMat(diagMatPow(diag[evolution.level], tickPower));
+            // log("diag");
+            // printMat(diag[evolution.level]);
+            // log(tickPower);
+            // log("diag^n");
+            // printMat(diagMatPow(diag[evolution.level], tickPower));
             growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
             rho = matMul(rho, growth);
         }
@@ -501,8 +501,10 @@ var getPrimaryEquation = () =>
     }
     result += "\\end{matrix}";
 
-    theory.primaryEquationScale = 1 - 0.1 * evolution.level;
-    theory.primaryEquationHeight = 55 - 4 * evolution.level;
+    let primaryScale = [0.95, 0.9, 0.75];
+    let primaryHeight = [55, 50, 40];
+    theory.primaryEquationScale = primaryScale[evolution.level];
+    theory.primaryEquationHeight = primaryHeight[evolution.level];
     return result;
 }
 
@@ -545,7 +547,7 @@ var getSecondaryEquation = () =>
     }
     result += "}\\\\";
     result += theory.latexSymbol;
-    result += "=\\max{\\rho}^{0.25}";
+    result += "=\\max{\\rho}^{0.5}";
     result += "\\end{matrix}";
 
     theory.secondaryEquationScale = 1 - 0.05 * evolution.level;
@@ -602,10 +604,10 @@ var getQuaternaryEntries = () =>
     return quaternaryEntries;
 }
 
-var getPublicationMultiplier = (tau) => tau.pow(0.768) / BigNumber.FOUR;
-var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.768}" + "}{4}";
-var getTau = () => currency.value.pow(BigNumber.from(0.25));
-var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.FOUR), currency.symbol];
+var getPublicationMultiplier = (tau) => tau.pow(0.384) / BigNumber.TWO;
+var getPublicationMultiplierFormula = (symbol) => "\\frac{" + "{" + symbol + "}^{0.384}" + "}{2}";
+var getTau = () => currency.value.pow(BigNumber.from(0.5));
+var getCurrencyFromTau = (tau) => [tau.max(BigNumber.ONE).pow(BigNumber.TWO), currency.symbol];
 var get2DGraphValue = () =>
 {
     switch(algo.level)
