@@ -247,7 +247,7 @@ var bitCountMap = new Map();
 var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
 
-var getQ1 = (level) => (level > 0 ? BigNumber.from(1.28).pow(level - 1) : 0);
+var getQ1 = (level) => (level > 0 ? BigNumber.from(1.2).pow(level - 1) : 0);
 var getQ2 = (level) => BigNumber.TWO.pow(level);
 var getTickspeed = (level) => (level == 1 ? limitedTickspeed[tickLimiter.level] : getQ1(q1.level) * getQ2(q2.level));
 var getC1 = (level) => Utils.getStepwisePowerSum(level, 3, 6, 1);
@@ -261,7 +261,7 @@ var init = () =>
     // q1 (Tickspeed)
     // Starts with 0, then goes to 1 and beyond?
     {
-        let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
+        let getDesc = (level) => "q_1=" + (level > 0 ? "1.2^{" + (level - 1) + "}" : "\\text{off}");
         let getInfo = (level) => "q_1=" + getQ1(level).toString();
         q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
