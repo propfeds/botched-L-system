@@ -4,8 +4,8 @@ import { BigNumber, parseBigNumber } from "../api/BigNumber";
 import { QuaternaryEntry, theory } from "../api/Theory";
 import { Utils } from "../api/Utils";
 
-var id = "botched_L_system_diagonal";
-var name = "Botched L-system (Diagonal)";
+var id = "botched_L_system";
+var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988";
 var version = 0.13;
@@ -263,7 +263,7 @@ var init = () =>
     {
         let getDesc = (level) => "q_1=" + (level > 0 ? "1.28^{" + (level - 1) + "}" : "\\text{off}");
         let getInfo = (level) => "q_1=" + getQ1(level).toString();
-        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 5)));
+        q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getInfo(q1.level), getInfo(q1.level + amount));
         q1.canBeRefunded = (_) => true;
