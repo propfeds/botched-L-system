@@ -8,7 +8,7 @@ var id = "botched_L_system";
 var name = "Botched L-system";
 var description = "Your school's laboratory has decided to grow a fictional plant in the data room.\n\nBe careful of its exponential growth, do not leave it idle,\nelse the database would slow down to a crawl and eventually explode in a fatal ERROR.\n\nNote: This theory will not draw a tree based on L-system rules due to its sheer size.\nOr perhaps the author has not implemented it yet.";
 var authors = "propfeds#5988";
-var version = 0.13;
+var version = "0.14";
 
 var bigNumMat = (array) => array.map((row) => row.map(x => BigNumber.from(x)));
 
@@ -266,7 +266,7 @@ var init = () =>
         q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getInfo(q1.level), getInfo(q1.level + amount));
-        q1.canBeRefunded = (_) => true;
+        q1.canBeRefunded = true;
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // q2 (Tickspeed)
@@ -277,7 +277,7 @@ var init = () =>
         q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
-        q2.canBeRefunded = (_) => true;
+        q2.canBeRefunded = true;
         q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // c1
@@ -286,7 +286,7 @@ var init = () =>
         c1 = theory.createUpgrade(2, currency, new ExponentialCost(1e5, Math.log2(1.6)));
         c1.getDescription = (_) => Utils.getMath(getDesc(c1.level));
         c1.getInfo = (amount) => Utils.getMathTo(getDesc(c1.level), getDesc(c1.level + amount));
-        c1.canBeRefunded = (_) => false;
+        c1.canBeRefunded = false;
     }
     // c2
     {
@@ -295,7 +295,7 @@ var init = () =>
         c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 4));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
-        c2.canBeRefunded = (_) => false;
+        c2.canBeRefunded = false;
     }
     // Tick limiter
     {
@@ -304,9 +304,10 @@ var init = () =>
         tl = theory.createUpgrade(4, currency, new FreeCost);
         tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
         tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
-        tl.maxLevel = 2;
-        tl.canBeRefunded = (_) => true;
+        tl.maxLevel = 1;
+        tl.canBeRefunded = true;
         tl.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
+        tl.isAutoBuyable = false;
     }
 
     theory.createPublicationUpgrade(0, currency, 1e8);
@@ -349,7 +350,7 @@ var init = () =>
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
-        algo.getInfo = (amount) => Localization.getUpgradeUnlockInfo(getName(algo.level + amount));
+        algo.getInfo = (amount) => "Improves game performance with the " + getName(algo.level + amount);
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
