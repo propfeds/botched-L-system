@@ -342,10 +342,10 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return "\\text{linear exponent algorithm}";
-                case 1: return "\\text{binary exponent algorithm}";
-                case 2: return "\\text{diagonalised algorithm}";
-                default: return "\\text{diagonalised algorithm}";
+                case 0: return "\\text{O(m^3*n) linear exponent algorithm}";
+                case 1: return "\\text{O(m^3*logn) binary exponent algorithm}";
+                case 2: return "\\text{O(m^3) diagonal algorithm}";
+                default: return "\\text{diagonal algorithm}";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
