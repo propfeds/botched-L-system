@@ -265,7 +265,7 @@ var init = () =>
         q1 = theory.createUpgrade(0, currency, new FirstFreeCost(new ExponentialCost(7, 4)));
         q1.getDescription = (_) => Utils.getMath(getDesc(q1.level));
         q1.getInfo = (amount) => Utils.getMathTo(getInfo(q1.level), getInfo(q1.level + amount));
-        q1.canBeRefunded = true;
+        q1.canBeRefunded = (_) => true;
         q1.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // q2 (Tickspeed)
@@ -276,7 +276,7 @@ var init = () =>
         q2 = theory.createUpgrade(1, currency, new ExponentialCost(1e4, Math.log2(1e4)));
         q2.getDescription = (_) => Utils.getMath(getDesc(q2.level));
         q2.getInfo = (amount) => Utils.getMathTo(getInfo(q2.level), getInfo(q2.level + amount));
-        q2.canBeRefunded = true;
+        q2.canBeRefunded = (_) => true;
         q2.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
     // c1
@@ -285,7 +285,7 @@ var init = () =>
         c1 = theory.createUpgrade(2, currency, new ExponentialCost(1e5, Math.log2(1.6)));
         c1.getDescription = (_) => Utils.getMath(getDesc(c1.level));
         c1.getInfo = (amount) => Utils.getMathTo(getDesc(c1.level), getDesc(c1.level + amount));
-        c1.canBeRefunded = false;
+        c1.canBeRefunded = (_) => false;
     }
     // c2
     {
@@ -294,7 +294,7 @@ var init = () =>
         c2 = theory.createUpgrade(3, currency, new ExponentialCost(3e9, 4));
         c2.getDescription = (_) => Utils.getMath(getDesc(c2.level));
         c2.getInfo = (amount) => Utils.getMathTo(getInfo(c2.level), getInfo(c2.level + amount));
-        c2.canBeRefunded = false;
+        c2.canBeRefunded = (_) => false;
     }
     // Tick limiter
     {
@@ -304,7 +304,7 @@ var init = () =>
         tl.getDescription = (_) => Utils.getMath(getDesc(tl.level));
         tl.getInfo = (amount) => Utils.getMathTo(getInfo(tl.level), getInfo(tl.level + amount));
         tl.maxLevel = 1;
-        tl.canBeRefunded = true;
+        tl.canBeRefunded = (_) => true;
         tl.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
         tl.isAutoBuyable = false;
     }
@@ -342,14 +342,14 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return "\\text{O(m^3*n) linear exponent algorithm}";
-                case 1: return "\\text{O(m^3*logn) binary exponent algorithm}";
-                case 2: return "\\text{O(m^3) diagonal algorithm}";
-                default: return "\\text{diagonal algorithm}";
+                case 0: return "O(m^3*n)\\text{ linear exp algorithm}";
+                case 1: return "O(m^3*logn)\\text{ binary exp algorithm}";
+                case 2: return "O(m^3)\\text{ diagonal algorithm}";
+                default: return "O(m^3)\\text{ diagonal algorithm}";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
-        algo.getInfo = (amount) => "Improves performance with the " + getName(algo.level + amount);
+        algo.getInfo = (amount) => "Improves performance, certainly!";
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
@@ -384,8 +384,8 @@ var init = () =>
     let library = theory.createAchievementCategory(0, "Library");
     theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
     
-    theory.createAchievement(1, library, "The Current Algorithm", "The L-system can be represented as a 1*m horizontal matrix L consisting of each letter's number of occurrences in the sequence. Then, the production rules are represented as a m*m square matrix P.\nWhen the L-system evolves, the next sequence can be calculated as follows:\nL(k+1)=L(k)*P\nThe current O(m^3*n) algorithm (with n as the tick power) performs n multiplications every tick, and therefore it is very slow.\nWatch out for your tick power.", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
-    theory.createAchievement(2, library, "The Binary Exponent Algorithm", "This newly implemented O(m^3*logn) algorithm instead represents the exponent n (tick power) as a binary number.\nBefore any multiplication happens, it stores the exponents of the rules matrix P within a cache, like so:\n[P, P^2, P^4, P^8, ...]\nThen, to raise P to the power of n, we would only need to multiply the cached matrices based on the binary representation of n.\nTherefore, how fast the algorithm performs depends on the amount of '1' bits in n's binary representation, the lower the better.\nWarning: n has an internal limit of 2^31-1.", () => algo.level > 0);
+    theory.createAchievement(1, library, "The Current Algorithm", "The L-system can be represented as a 1*m horizontal matrix L consisting of each letter's number of occurrences in the sequence.\nThen, the production rules are represented as a m*m square matrix P.\nWhen the L-system evolves, the next sequence can be calculated as follows:\nL(k+1)=L(k)*P\nThe current O(m^3*n) algorithm (with n as the tick power) performs n multiplications every tick, and therefore it is very slow.\nWatch out for your tick power.", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
+    theory.createAchievement(2, library, "The Binary Exponent Algorithm", "This newly implemented O(m^3*logn) algorithm instead represents the exponent n (tick power) as a binary number.\nBefore any multiplication happens, it stores the exponents of the rules matrix P within a cache, like so:\n[P, P^2, P^4, P^8, ...]\nThen, to raise P to the power of n, we would only need to multiply the cached matrices based on the binary representation of n.\nTherefore, how fast the algorithm performs depends on the amount of '1' bits in n's binary representation.\nWarning: n has an internal limit of 2^31-1.", () => algo.level > 0);
     theory.createAchievement(3, library, "The Diagonalised Algorithm", "Turns out, we can go faster than that.\nIn this O(m^3) algorithm, we break down P into its eigenvector V and its diagonal matrix D:\nP=V*D*(V^-1)\nThen, P^n can be calculated by:\nP^n=V*(D^n)*(V^-1)\nCalculating D^n can be simply performed by raising every element to the power of n, massively improving the performance over the previous algorithm.", () => algo.level > 1);
 
     theory.createAchievement(4, library, "Cultivar FF", "Represents a common source of carbohydrates.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => evolution.level > 0);
@@ -396,7 +396,7 @@ var init = () =>
     chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'\n\nTip: Visit the achievements to access the library for tutorials.", () => true);
     chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow (?) down the computing.", () => tickLimiter.level > 0);
     chapter2 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
-    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
+    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "I heard our new engineer has implemented a new algorithm,\nand I heard that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
     chapter4 = theory.createStoryChapter(4, "Catharsis", "Finally.\nA good enough scientist who actually knows what they're doing.\nNo more famine, no more internal struggle.\nTo infinity and botch on!", () => algo.level > 1);
 }
 
