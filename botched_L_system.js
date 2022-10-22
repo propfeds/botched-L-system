@@ -244,7 +244,6 @@ var q1, q2, c1, c2, tl;
 var algo, tickLimiter, evolution, c1Exp;
 var quaternaryEntries = [];
 var bitCountMap = new Map();
-var codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24]);
 
 
 var getQ1 = (level) => (level > 0 ? BigNumber.from(1.2).pow(level - 1) : 0);
@@ -343,14 +342,14 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return "\\text{linear power algorithm}";
-                case 1: return "\\text{binary power algorithm}";
+                case 0: return "\\text{linear exponent algorithm}";
+                case 1: return "\\text{binary exponent algorithm}";
                 case 2: return "\\text{diagonalised algorithm}";
                 default: return "\\text{diagonalised algorithm}";
             }
         }
         algo.getDescription = (amount) => Localization.getUpgradeUnlockDesc(getName(algo.level + amount));
-        algo.getInfo = (amount) => "Improves game performance with the " + getName(algo.level + amount);
+        algo.getInfo = (amount) => "Improves performance with the " + getName(algo.level + amount);
         algo.maxLevel = 2;
         algo.boughtOrRefunded = (_) => theory.invalidateTertiaryEquation();
     }
@@ -358,7 +357,7 @@ var init = () =>
     theory.createAutoBuyerUpgrade(4, currency, 1e160);
 
     // First unlock is at the same stage as auto-buyer
-    theory.setMilestoneCost(new LinearCost(16, 16));
+    theory.setMilestoneCost(new LinearCost(16, 8));
     // Branch weight: gives a flat income multiplication and literally no growth.
     {
         evolution = theory.createMilestoneUpgrade(0, 2);
@@ -380,16 +379,22 @@ var init = () =>
         c1Exp.boughtOrRefunded = (_) => theory.invalidateSecondaryEquation();
     }
 
+    let codexPoints = bigNumList([1e4, 1e8, 1e16, 1e24, 1e32]);
     // Achievements (Codex)
     let library = theory.createAchievementCategory(0, "Library");
-    theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick\nF: moves cursor forward to create a line\nX: acts like a seed for branches\n+, -: turns cursor by an angle\n(left/right differs between implementations)\n[, ]: allows for branches, by queueing\ncursor positions on a stack", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
-    theory.createAchievement(1, library, "Cultivar FF", "Represents a common source of carbohydrates.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
-    theory.createAchievement(2, library, "Cultivar FXF", "Commonly called the Cyclone, cultivar FXF resembles a coil of barbed wire. Legends have it, once a snake moult has weathered enough, a new life is born unto the tattered husk, and from there, it stretches.\nAxiom: X\nF→F[+F]XF\nX→F-[[X]+X]+F[-FX]-X", () => theory.tau > codexPoints[2], () => tauAchievementProgress(codexPoints[2]));
-    theory.createAchievement(3, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[X+FX]-X", () => theory.tau > codexPoints[3], () => tauAchievementProgress(codexPoints[3]));
+    theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
+    
+    theory.createAchievement(1, library, "The Current Algorithm", "The L-system can be represented as a 1*m horizontal matrix L consisting of each letter's number of occurrences in the sequence. Then, the production rules are represented as a m*m square matrix P.\nWhen the L-system evolves, the next sequence can be calculated as follows:\nL(k+1)=L(k)*P\nThe current O(m^3*n) algorithm (with n as the tick power) performs n multiplications every tick, and therefore it is very slow.\nWatch out for your tick power.", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
+    theory.createAchievement(2, library, "The Binary Exponent Algorithm", "This newly implemented O(m^3*logn) algorithm instead represents the exponent n (tick power) as a binary number.\nBefore any multiplication happens, it stores the exponents of the rules matrix P within a cache, like so:\n[P, P^2, P^4, P^8, ...]\nThen, to raise P to the power of n, we would only need to multiply the cached matrices based on the binary representation of n.\nTherefore, how fast the algorithm performs depends on the amount of '1' bits in n's binary representation, the lower the better.\nWarning: n has an internal limit of 2^31-1.", () => algo.level > 0);
+    theory.createAchievement(3, library, "The Diagonalised Algorithm", "Turns out, we can go faster than that.\nIn this O(m^3) algorithm, we break down P into its eigenvector V and its diagonal matrix D:\nP=V*D*(V^-1)\nThen, P^n can be calculated by:\nP^n=V*(D^n)*(V^-1)\nCalculating D^n can be simply performed by raising every element to the power of n, massively improving the performance over the previous algorithm.", () => algo.level > 1);
+
+    theory.createAchievement(4, library, "Cultivar FF", "Represents a common source of carbohydrates.\nAxiom: X\nF→FF\nX→F-[[X]+X]+F[-X]-X", () => evolution.level > 0);
+    theory.createAchievement(5, library, "Cultivar FXF", "Commonly called the Cyclone, cultivar FXF resembles a coil of barbed wire. Legends have it, once a snake moult has weathered enough, a new life is born unto the tattered husk, and from there, it stretches.\nAxiom: X\nF→F[+F]XF\nX→F-[[X]+X]+F[-FX]-X", () => evolution.level > 0);
+    theory.createAchievement(6, library, "Cultivar XEXF", "Bearing the shape of a thistle, cultivar XEXF embodies the strength and resilience of nature against the harsh logarithm drop-off. It also smells really, really good.\nAxiom: X\nE→XEXF-\nF→FX+[E]X\nX→F-[X+[X[++E]F]]+F[X+FX]-X", () => evolution.level > 1);
 
     // Chapters
-    chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'", () => true);
-    chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow down the computing.", () => tickLimiter.level > 0);
+    chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'\n\nTip: Visit the achievements to access the library for tutorials.", () => true);
+    chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow (?) down the computing.", () => tickLimiter.level > 0);
     chapter2 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
     chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "Our database uses a log2 matrix power algorithm,\nwhich means that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
     chapter4 = theory.createStoryChapter(4, "Catharsis", "Finally.\nA good enough scientist who actually knows what they're doing.\nNo more famine, no more internal struggle.\nTo infinity and botch on!", () => algo.level > 1);
