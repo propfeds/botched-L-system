@@ -233,7 +233,7 @@ var weight = [bigNumMat([
     [2],
     [2]
 ])];
-var limitedTickspeed = bigNumList([0, 1200, 5120, 5120]);
+var limitedTickspeed = bigNumList([0, 600, 5120, 5120]);
 var ltsBitCount = [0, 4, 1];
 var time = 0;
 var bits = 0;
@@ -334,17 +334,17 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return BigNumber.from(1e48);
-                case 1: return BigNumber.from(1e112);
+                case 0: return BigNumber.from(1e32);
+                case 1: return BigNumber.from(1e96);
             }
         }));
         let getName = (level) =>
         {
             switch(level)
             {
-                case 0: return "O(m^3*n)\\text{ linear exp algorithm}";
-                case 1: return "O(m^3*logn)\\text{ binary exp algorithm}";
-                case 2: return "O(m^3)\\text{ diagonal algorithm}";
+                case 0: return "\\text{O}(m^3*n)\\text{ algorithm}";
+                case 1: return "\\text{O}(m^3*\\text{log}n)\\text{ algorithm}";
+                case 2: return "\\text{O}(m^3)\\text{ algorithm}";
                 default: return "O(m^3)\\text{ diagonal algorithm}";
             }
         }
@@ -418,14 +418,15 @@ var tick = (elapsedTime, multiplier) =>
 
     if(time >= timeLimit - 1e-8)
     {
-        if(algo.level < 2)
+        if(algo.level == 2 || game.isCalculatingOfflineProgress)
+            tickPower = tickSpeed * BigNumber.from(time);
+        else
         {
             tickPower = Math.min(Math.round(tickSpeed.toNumber() * time), 0x7FFFFFFF);
             if(tl.level == 1)
                 origTickPower = Math.min(Math.round(getTickspeed(0).toNumber() * time), 0x7FFFFFFF);
         }
-        else
-            tickPower = tickSpeed * BigNumber.from(time);
+            
         // log(tickPower);
 
         let bonus = theory.publicationMultiplier * multiplier;
@@ -433,10 +434,10 @@ var tick = (elapsedTime, multiplier) =>
         let vc2 = getC2(c2.level);
 
         let growth;
-        if(algo.level == 0)
+        if(algo.level == 2 || game.isCalculatingOfflineProgress)
         {
-            for(let i = 0; i < tickPower; ++i)
-                rho = matMul(rho, rules[evolution.level]);
+            growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
+            rho = matMul(rho, growth);
         }
         else if(algo.level == 1)
         {
@@ -445,13 +446,8 @@ var tick = (elapsedTime, multiplier) =>
         }
         else
         {
-            // log("diag");
-            // printMat(diag[evolution.level]);
-            // log(tickPower);
-            // log("diag^n");
-            // printMat(diagMatPow(diag[evolution.level], tickPower));
-            growth = matMul(matMul(v[evolution.level], diagMatPow(diag[evolution.level], tickPower)), vInv[evolution.level]);
-            rho = matMul(rho, growth);
+            for(let i = 0; i < tickPower; ++i)
+                rho = matMul(rho, rules[evolution.level]);
         }
         
         currency.value += (elemMatPow(rho, weight[evolution.level])[0][0]).log2() * bonus * vc1 * vc2;
