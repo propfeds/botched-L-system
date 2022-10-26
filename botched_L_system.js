@@ -335,7 +335,7 @@ var init = () =>
             switch(level)
             {
                 case 0: return BigNumber.from(1e32);
-                case 1: return BigNumber.from(1e96);
+                case 1: return BigNumber.from(1e112);
             }
         }));
         let getName = (level) =>
