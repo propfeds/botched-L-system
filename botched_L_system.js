@@ -362,7 +362,7 @@ var init = () =>
     {
         evolution = theory.createMilestoneUpgrade(0, 2);
         evolution.getDescription = (amount) => "Evolve into cultivar " + (evolution.level + amount < 2 ? "FXF" : "XEXF");
-        evolution.getInfo = (amount) => Localization.getUpgradeUnlockInfo((evolution.level + amount < 2 ? "(+)/(-)" : "\\text{E}")) + "; " + Localization.getUpgradeIncCustomExpInfo("\\text{every}", "0.5");
+        evolution.getInfo = (amount) => Localization.getUpgradeUnlockInfo((evolution.level + amount < 2 ? "(+)/(-)" : "\\text{E}")) + "; " + Localization.getUpgradeIncCustomExpInfo("\\text{symbols'}", "0.5");
         evolution.boughtOrRefunded = (_) =>
         {
             theory.invalidatePrimaryEquation();
