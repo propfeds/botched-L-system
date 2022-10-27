@@ -334,7 +334,7 @@ var init = () =>
         {
             switch(level)
             {
-                case 0: return BigNumber.from(1e32);
+                case 0: return BigNumber.from(1e40);
                 case 1: return BigNumber.from(1e112);
             }
         }));
