@@ -384,7 +384,7 @@ var init = () =>
     let library = theory.createAchievementCategory(0, "Library");
     theory.createAchievement(0, library, "A Primer on L-systems", "Developed in 1968 by biologist Aristid Lindenmayer, an L-system is a formal grammar that describes the growth of a sequence (string), and was originally used to model the growth of a plant.\n\nThe syntax of L-systems:\nAxiom: the starting sequence\nRules: how the sequence expands each tick", () => theory.tau > codexPoints[0], () => tauAchievementProgress(codexPoints[0]));
     
-    theory.createAchievement(1, library, "The Current Algorithm", "The L-system can be represented as a 1*m horizontal matrix L consisting of each letter's number of occurrences in the sequence.\nThen, the production rules are represented as a m*m square matrix P.\nWhen the L-system evolves, the next sequence can be calculated as follows:\nL(k+1)=L(k)*P\nThe current O(m^3*n) algorithm (with n as the tick power) performs n multiplications every tick, and therefore it is very slow.\nWatch out for your tick power.", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
+    theory.createAchievement(1, library, "The Current Algorithm", "The L-system can be represented as a 1*m horizontal matrix L consisting of each letter's number of occurrences in the sequence.\nThen, the production rules are represented as a m*m square matrix P.\nWhen the L-system evolves, the next sequence can be calculated as follows:\nL(k+1)=L(k)*P\nThe current O(m^3*n) algorithm (with n as the tick power) performs n multiplications every tick, and therefore it is very slow.\nWatch out for your tick power.\nWarning: symbols are capped at ee6 due to precision issues.", () => theory.tau > codexPoints[1], () => tauAchievementProgress(codexPoints[1]));
     theory.createAchievement(2, library, "The Binary Exponent Algorithm", "This newly implemented O(m^3*logn) algorithm instead represents the exponent n (tick power) as a binary number.\nBefore any multiplication happens, it stores the exponents of the rules matrix P within a cache, like so:\n[P, P^2, P^4, P^8, ...]\nThen, to raise P to the power of n, we would only need to multiply the cached matrices based on the binary representation of n.\nTherefore, how fast the algorithm performs depends on the amount of '1' bits in n's binary representation.\nWarning: n has an internal limit of 2^31-1.", () => algo.level > 0);
     theory.createAchievement(3, library, "The Diagonalised Algorithm", "Turns out, we can go faster than that.\nIn this O(m^3) algorithm, we break down P into its eigenvector V and its diagonal matrix D:\nP=V*D*(V^-1)\nThen, P^n can be calculated by:\nP^n=V*(D^n)*(V^-1)\nCalculating D^n can be simply performed by raising every element to the power of n, massively improving the performance over the previous algorithm.", () => algo.level > 1);
 
@@ -462,18 +462,17 @@ var tick = (elapsedTime, multiplier) =>
     }
 }
 
-var getInternalState = () => `${currency.value} ${rho[0][0]} ${rho[0][1]} ${rho[0][2]} ${rho[0][3]} ${rho[0][4]} ${time}`
+var getInternalState = () => `${time} ${rho[0][0]} ${rho[0][1]} ${rho[0][2]} ${rho[0][3]} ${rho[0][4]}`
 
 var setInternalState = (state) =>
 {
     let values = state.split(" ");
-    if(values.length > 0) currency.value = parseBigNumber(values[0])
+    if(values.length > 0) time = parseBigNumber(values[0]);
     if(values.length > 1) rho[0][0] = parseBigNumber(values[1]);
     if(values.length > 2) rho[0][1] = parseBigNumber(values[2]);
     if(values.length > 3) rho[0][2] = parseBigNumber(values[3]);
     if(values.length > 4) rho[0][3] = parseBigNumber(values[4]);
     if(values.length > 5) rho[0][4] = parseBigNumber(values[5]);
-    if(values.length > 6) time = parseBigNumber(values[6]);
 }
 
 var alwaysShowRefundButtons = () =>
