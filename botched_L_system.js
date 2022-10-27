@@ -259,10 +259,10 @@ var cultivarFF = new LSystem('X', ['F=FF', 'X=F-[[X]+X]+F[-X]-X'], 15);
 var cultivarFXF = new LSystem('X', ['F=F[+F]XF', 'X=F-[[X]+X]+F[-FX]-X'], 27);
 var cultivarXEXF = new LSystem('X', ['E=XEXF-', 'F=FX+[E]X', 'X=F-[X+[X[++E]F]]+F[X+FX]-X'], 22.5);
 var systems = [cultivarFF, cultivarFXF, cultivarXEXF];
-var renderer = new Renderer(cultivarFF, 1, 2, false, 1, 0, 0.4, false, true, false, false, false);
+var renderer = new Renderer(cultivarFF, 1.5, 2, false, 1, 0, 0.4, false, true, false, false, false);
 var configs =
 [
-    [1, 2, 1, 0, true],
+    [1.5, 2, 1, 0, true],
     [1.5, 2, 0.25, 0.75, false],
     [1, 3, 0.75, -0.25, true]
 ];
