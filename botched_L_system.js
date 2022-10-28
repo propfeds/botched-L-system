@@ -659,7 +659,7 @@ var init = () =>
     chapter0 = theory.createStoryChapter(0, "Botched L-system", "'I am very sure.\nWheat this fractal plant, we will be able to attract...\nfunding, for our further research!'\n\n'...Now turn it on, watch it rice, and the magic will happen.'\n\nTip: Visit the achievements to access the library for tutorials.", () => true);
     chapter1 = theory.createStoryChapter(1, "Limiter", "Our generation algorithm is barley even working...\n\nMy colleague told me that, in case of emergency,\nI should turn this limiter on to slow (?) down the computing.", () => tickLimiter.level > 0);
     chapter2 = theory.createStoryChapter(2, "Fractal Exhibition", "Our manager is arranging an exhibition next week,\nto showcase the lab's research on fractal curves.\n\nIs this lady out of her mind?\nOur generation algorithm is barley working...", () => evolution.level > 0);
-    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "I heard our new engineer has implemented a new algorithm,\nand I heard that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe.", () => algo.level > 0);
+    chapter3 = theory.createStoryChapter(3, "Nitpicking Exponents", "I heard our new engineer has implemented a new algorithm,\nand I heard that the more 1-bits that are on the exponent,\nthe more we have to process.\n\nAnd the fewer there are, the less likely we would face\na catastrophe, maybe?", () => algo.level > 0);
     chapter4 = theory.createStoryChapter(4, "Catharsis", "Finally.\nA good enough scientist who actually knows what they're doing.\nNo more famine, no more internal struggle.\nTo infinity and botch on!", () => algo.level > 1);
 }
 
