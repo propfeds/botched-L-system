@@ -922,7 +922,7 @@ var get2DGraphValue = () =>
         return 0;
     switch(algo.level)
     {
-        case 0: return Math.log2(tickPower);
+        case 0: return Math.log2(Math.max(tickPower, 1));
         case 1: return (tl.level == 1 ? ltsBitCount[tickLimiter.level] : bits);
         case 2: return (BigNumber.ONE + currency.value.abs()).log10().toNumber();
     }
